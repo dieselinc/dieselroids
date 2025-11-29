@@ -575,64 +575,77 @@
         
         if (isTouchDevice) {
             mobileControls.classList.add('active');
-            
-            // Prevent default touch behaviors
-            const preventDefaults = (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-            };
 
             // LEFT button
             btnLeft.addEventListener('touchstart', (e) => {
-                preventDefaults(e);
+                e.preventDefault(); // Prevent scrolling
                 keys['ArrowLeft'] = true;
-            });
+            }, { passive: false });
             btnLeft.addEventListener('touchend', (e) => {
-                preventDefaults(e);
+                e.preventDefault();
                 keys['ArrowLeft'] = false;
-            });
+            }, { passive: false });
 
             // RIGHT button
             btnRight.addEventListener('touchstart', (e) => {
-                preventDefaults(e);
+                e.preventDefault();
                 keys['ArrowRight'] = true;
-            });
+            }, { passive: false });
             btnRight.addEventListener('touchend', (e) => {
-                preventDefaults(e);
+                e.preventDefault();
                 keys['ArrowRight'] = false;
-            });
+            }, { passive: false });
 
             // THRUST button
             btnThrust.addEventListener('touchstart', (e) => {
-                preventDefaults(e);
+                e.preventDefault();
                 keys['ArrowUp'] = true;
-            });
+            }, { passive: false });
             btnThrust.addEventListener('touchend', (e) => {
-                preventDefaults(e);
+                e.preventDefault();
                 keys['ArrowUp'] = false;
-            });
+            }, { passive: false });
 
             // FIRE button
             btnFire.addEventListener('touchstart', (e) => {
-                preventDefaults(e);
-                if (gameState.gameStarted && !gameState.gameOver) {
+                e.preventDefault();
+                if (!gameState.gameStarted) {
+                    // Start game on first tap of FIRE button!
+                    if (!musicStartAttempted && !startMusicInterval) {
+                        // Start music first
+                        if (audioCtx.state === 'suspended') {
+                            audioCtx.resume().then(() => {
+                                startStartScreenMusic();
+                            });
+                        } else {
+                            startStartScreenMusic();
+                        }
+                        musicStartAttempted = true;
+                    }
+                    // Then start game
+                    startGame();
+                } else if (gameState.gameOver) {
+                    // Restart on game over
+                    initGame();
+                } else {
+                    // Fire during game
                     shoot();
                 }
-            });
+            }, { passive: false });
             btnFire.addEventListener('touchend', (e) => {
-                preventDefaults(e);
-            });
+                e.preventDefault();
+            }, { passive: false });
 
             // HYPERSPACE button
             btnHyper.addEventListener('touchstart', (e) => {
-                preventDefaults(e);
+                e.preventDefault();
                 if (gameState.gameStarted && !gameState.gameOver) {
                     hyperspace();
                 }
-            });
+            }, { passive: false });
             btnHyper.addEventListener('touchend', (e) => {
-                preventDefaults(e);
-            });
+                e.preventDefault();
+            }, { passive: false });
         }
 
         // Ship-Klasse
