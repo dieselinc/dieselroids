@@ -128,32 +128,38 @@
         /* MOBILE CONTROLS */
         #mobileControls {
             position: absolute;
-            bottom: 30px; /* Mehr Abstand! */
-            left: 50%;
-            transform: translateX(-50%);
+            bottom: 20px;
+            left: 0;
+            right: 0;
             display: none;
-            gap: 20px; /* Mehr Platz zwischen Buttons! */
+            justify-content: space-between;
+            align-items: flex-end;
             z-index: 1000;
-            padding: 15px;
+            padding: 0 20px;
         }
 
         #mobileControls.active {
             display: flex;
         }
 
-        .control-group {
+        .control-group-left {
             display: flex;
-            gap: 10px;
+            gap: 15px;
+        }
+
+        .control-group-right {
+            display: flex;
+            gap: 15px;
         }
 
         .control-btn {
-            width: 90px; /* Größer! (war 70px) */
-            height: 90px;
+            width: 85px;
+            height: 85px;
             background: rgba(255, 255, 255, 0.1);
-            border: 3px solid #fff; /* Dicker! */
+            border: 3px solid #fff;
             color: #fff;
             font-family: 'Courier New', monospace;
-            font-size: 28px; /* Größer! */
+            font-size: 32px;
             font-weight: bold;
             cursor: pointer;
             user-select: none;
@@ -161,10 +167,18 @@
             -webkit-tap-highlight-color: transparent;
             touch-action: manipulation;
             display: flex;
+            flex-direction: column;
             align-items: center;
             justify-content: center;
             text-align: center;
-            line-height: 1.2;
+            line-height: 1;
+            padding: 5px;
+        }
+
+        .btn-label {
+            font-size: 11px;
+            margin-top: 2px;
+            opacity: 0.8;
         }
 
         .control-btn:active {
@@ -184,7 +198,6 @@
         .control-btn.fire {
             background: rgba(255, 0, 0, 0.1);
             border-color: #f00;
-            font-size: 32px;
         }
 
         .control-btn.fire:active {
@@ -194,7 +207,7 @@
         .control-btn.hyper {
             background: rgba(255, 255, 0, 0.1);
             border-color: #ff0;
-            font-size: 20px;
+            font-size: 28px;
         }
 
         .control-btn.hyper:active {
@@ -232,9 +245,22 @@
             }
 
             .control-btn {
-                width: 75px; /* Phones etwas kleiner */
-                height: 75px;
-                font-size: 24px;
+                width: 70px; /* Phones kleiner */
+                height: 70px;
+                font-size: 28px;
+            }
+
+            .btn-label {
+                font-size: 9px;
+            }
+
+            #mobileControls {
+                padding: 0 10px;
+            }
+
+            .control-group-left,
+            .control-group-right {
+                gap: 10px;
             }
         }
     </style>
@@ -268,18 +294,14 @@
         
         <!-- MOBILE CONTROLS (nur auf Touch-Geräten sichtbar) -->
         <div id="mobileControls">
-            <div class="control-group">
+            <div class="control-group-left">
+                <button id="btnFire" class="control-btn fire">●<br><span class="btn-label">FIRE</span></button>
+                <button id="btnHyper" class="control-btn hyper">⚡<br><span class="btn-label">HYPER</span></button>
+            </div>
+            <div class="control-group-right">
                 <button id="btnLeft" class="control-btn">◄</button>
+                <button id="btnThrust" class="control-btn thrust">▲<br><span class="btn-label">THRUST</span></button>
                 <button id="btnRight" class="control-btn">►</button>
-            </div>
-            <div class="control-group">
-                <button id="btnThrust" class="control-btn thrust">▲<br>THRUST</button>
-            </div>
-            <div class="control-group">
-                <button id="btnFire" class="control-btn fire">●<br>FIRE</button>
-            </div>
-            <div class="control-group">
-                <button id="btnHyper" class="control-btn hyper">⚡<br>HYPER</button>
             </div>
         </div>
     </div>
