@@ -246,6 +246,11 @@
                 display: none; /* Hide "PRESS SPACE" on mobile */
             }
 
+            /* HIDE INSTRUCTIONS ON MOBILE! */
+            #instructions {
+                display: none !important;
+            }
+
             #ui {
                 font-size: 14px; /* Kleiner! */
                 top: 10px;
@@ -278,6 +283,13 @@
             .control-group-left,
             .control-group-right {
                 gap: 10px;
+            }
+        }
+
+        /* ALSO hide on tablets/iPads with touch! */
+        @media (min-width: 769px) and (max-width: 1024px) and (hover: none) {
+            #instructions {
+                display: none !important;
             }
         }
     </style>
