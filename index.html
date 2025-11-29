@@ -1,0 +1,1354 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DIESELROIDS (1979)</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: #000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            font-family: 'Courier New', monospace;
+            color: #fff;
+            overflow: hidden;
+        }
+
+        #gameContainer {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+        }
+
+        canvas {
+            display: block;
+            background: #000;
+            border: 2px solid #fff;
+            width: 100%;
+            height: 100%;
+        }
+
+        #ui {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            right: 20px;
+            display: flex;
+            justify-content: space-between;
+            font-size: 20px;
+            text-shadow: 0 0 10px #fff;
+            pointer-events: none;
+        }
+
+        #gameOver {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            font-size: 32px;
+            text-shadow: 0 0 20px #fff;
+            display: none;
+        }
+
+        #gameOver.show {
+            display: block;
+        }
+
+        #startScreen {
+            position: absolute;
+            top: 35%; /* Höher! (war 50%) */
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            z-index: 10;
+        }
+
+        #startScreen.hide {
+            display: none;
+        }
+
+        #startScreen h1 {
+            font-size: 80px;
+            letter-spacing: 10px;
+            margin-bottom: 20px;
+            text-shadow: 0 0 30px #fff;
+        }
+
+        #startScreen .tagline {
+            font-size: 14px;
+            opacity: 0.7;
+            letter-spacing: 2px;
+            margin-bottom: 30px;
+        }
+
+        #startScreen p {
+            font-size: 24px;
+            animation: blink 1.5s infinite;
+        }
+
+        .mobile-hint {
+            display: none; /* Hidden by default */
+        }
+
+        @keyframes blink {
+            0%, 50% { opacity: 1; }
+            51%, 100% { opacity: 0.3; }
+        }
+
+        #instructions {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            text-align: center;
+            font-size: 14px;
+            opacity: 0.7;
+        }
+
+        #copyright {
+            position: absolute;
+            bottom: 10px;
+            right: 20px;
+            text-align: right;
+            font-size: 10px;
+            opacity: 0.6;
+            letter-spacing: 1px;
+            line-height: 1.6;
+        }
+
+        /* MOBILE CONTROLS */
+        #mobileControls {
+            position: absolute;
+            bottom: 30px; /* Mehr Abstand! */
+            left: 50%;
+            transform: translateX(-50%);
+            display: none;
+            gap: 20px; /* Mehr Platz zwischen Buttons! */
+            z-index: 1000;
+            padding: 15px;
+        }
+
+        #mobileControls.active {
+            display: flex;
+        }
+
+        .control-group {
+            display: flex;
+            gap: 10px;
+        }
+
+        .control-btn {
+            width: 90px; /* Größer! (war 70px) */
+            height: 90px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 3px solid #fff; /* Dicker! */
+            color: #fff;
+            font-family: 'Courier New', monospace;
+            font-size: 28px; /* Größer! */
+            font-weight: bold;
+            cursor: pointer;
+            user-select: none;
+            -webkit-user-select: none;
+            -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            line-height: 1.2;
+        }
+
+        .control-btn:active {
+            background: rgba(255, 255, 255, 0.3);
+            transform: scale(0.95);
+        }
+
+        .control-btn.thrust {
+            background: rgba(0, 255, 0, 0.1);
+            border-color: #0f0;
+        }
+
+        .control-btn.thrust:active {
+            background: rgba(0, 255, 0, 0.3);
+        }
+
+        .control-btn.fire {
+            background: rgba(255, 0, 0, 0.1);
+            border-color: #f00;
+            font-size: 32px;
+        }
+
+        .control-btn.fire:active {
+            background: rgba(255, 0, 0, 0.3);
+        }
+
+        .control-btn.hyper {
+            background: rgba(255, 255, 0, 0.1);
+            border-color: #ff0;
+            font-size: 20px;
+        }
+
+        .control-btn.hyper:active {
+            background: rgba(255, 255, 0, 0.3);
+        }
+
+        /* Hide instructions on mobile when controls are active */
+        #mobileControls.active ~ #instructions {
+            display: none;
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .mobile-hint {
+                display: block !important; /* Show on mobile */
+            }
+
+            #startScreen p:first-of-type {
+                display: none; /* Hide "PRESS SPACE" on mobile */
+            }
+
+            #ui {
+                font-size: 14px; /* Kleiner! */
+                top: 10px;
+                left: 10px;
+                right: 10px;
+            }
+
+            #startScreen h1 {
+                font-size: 56px; /* Größer! */
+            }
+
+            #startScreen .tagline {
+                font-size: 12px;
+            }
+
+            .control-btn {
+                width: 75px; /* Phones etwas kleiner */
+                height: 75px;
+                font-size: 24px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="gameContainer">
+        <canvas id="gameCanvas"></canvas>
+        <div id="ui">
+            <div id="score">SCORE: 0</div>
+            <div id="highScore">HIGH: 0</div>
+            <div id="wave">WAVE: 1</div>
+            <div id="lives">LIVES: 3</div>
+            <div id="bonusShip" style="font-size: 12px; opacity: 0.7;">BONUS SHIP AT 10000</div>
+        </div>
+        <div id="startScreen">
+            <h1>DIESELROIDS</h1>
+            <div class="tagline">A TRIBUTE TO THE 1979 ARCADE CLASSIC ASTEROIDS</div>
+            <p>PRESS SPACE TO START</p>
+            <p style="font-size: 20px; margin-top: 30px; opacity: 0.8; animation: blink 1.5s infinite;" class="mobile-hint">TAP ANYWHERE TO START</p>
+        </div>
+        <div id="gameOver">
+            GAME OVER<br>
+            <span style="font-size: 20px;">Press SPACE to restart</span>
+        </div>
+        <div id="instructions">
+            ← → Rotate  |  ↑ Thrust  |  ↓ Brake  |  SPACE Fire  |  SHIFT Hyperspace
+        </div>
+        <div id="copyright">
+            © 2025 DIESEL INC.
+        </div>
+        
+        <!-- MOBILE CONTROLS (nur auf Touch-Geräten sichtbar) -->
+        <div id="mobileControls">
+            <div class="control-group">
+                <button id="btnLeft" class="control-btn">◄</button>
+                <button id="btnRight" class="control-btn">►</button>
+            </div>
+            <div class="control-group">
+                <button id="btnThrust" class="control-btn thrust">▲<br>THRUST</button>
+            </div>
+            <div class="control-group">
+                <button id="btnFire" class="control-btn fire">●<br>FIRE</button>
+            </div>
+            <div class="control-group">
+                <button id="btnHyper" class="control-btn hyper">⚡<br>HYPER</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const scoreEl = document.getElementById('score');
+        const highScoreEl = document.getElementById('highScore');
+        const waveEl = document.getElementById('wave');
+        const livesEl = document.getElementById('lives');
+        const gameOverEl = document.getElementById('gameOver');
+        const startScreenEl = document.getElementById('startScreen');
+
+        // Canvas an Fenstergröße anpassen
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        resizeCanvas();
+        window.addEventListener('resize', resizeCanvas);
+
+        // Audio-Kontext für Laser-Sound
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        
+        // Start Screen Music State
+        let startMusicInterval = null;
+        let startMusicGain = null;
+
+        // Mondscheinsonate Start-Musik
+        function startStartScreenMusic() {
+            console.log('🎵 startStartScreenMusic called!');
+            if (startMusicInterval) {
+                console.log('⚠️ Music already running!');
+                return; // Läuft schon
+            }
+            
+            console.log('✅ Starting music...');
+            
+            // Master Gain
+            startMusicGain = audioCtx.createGain();
+            startMusicGain.gain.setValueAtTime(0.12, audioCtx.currentTime);
+            startMusicGain.connect(audioCtx.destination);
+            
+            // Extended Cis-Moll Melodie (mehr Takte!)
+            const melody = [
+                277.18, 329.63, 415.30, 493.88,  // Takt 1
+                277.18, 329.63, 415.30, 493.88,  // Takt 2
+                293.66, 329.63, 440.00, 493.88,  // Takt 3
+                293.66, 329.63, 440.00, 493.88,  // Takt 4
+                277.18, 329.63, 415.30, 493.88,  // Takt 5
+                261.63, 311.13, 392.00, 466.16,  // Takt 6 (variation)
+                277.18, 329.63, 415.30, 493.88,  // Takt 7
+                293.66, 349.23, 440.00, 523.25   // Takt 8 (höher)
+            ];
+            
+            const bass = [
+                138.59, 138.59, 164.81, 164.81,  // Bass 1-2
+                138.59, 138.59, 164.81, 164.81,  // Bass 3-4
+                146.83, 146.83, 220.00, 220.00,  // Bass 5-6
+                146.83, 146.83, 220.00, 220.00,  // Bass 7-8
+                138.59, 138.59, 164.81, 164.81,  // Bass 9-10
+                130.81, 130.81, 196.00, 196.00,  // Bass 11-12
+                138.59, 138.59, 164.81, 164.81,  // Bass 13-14
+                146.83, 174.61, 220.00, 261.63   // Bass 15-16
+            ];
+            
+            let noteIndex = 0;
+            
+            function playNote() {
+                // Melodie
+                const osc1 = audioCtx.createOscillator();
+                osc1.type = 'square';
+                osc1.frequency.value = melody[noteIndex % melody.length];
+                osc1.connect(startMusicGain);
+                osc1.start();
+                osc1.stop(audioCtx.currentTime + 0.4);
+                
+                // Bass (jeden 2. Beat)
+                if (noteIndex % 2 === 0) {
+                    const osc2 = audioCtx.createOscillator();
+                    osc2.type = 'square';
+                    osc2.frequency.value = bass[noteIndex % bass.length];
+                    const bassGain = audioCtx.createGain();
+                    bassGain.gain.value = 0.08;
+                    osc2.connect(bassGain);
+                    bassGain.connect(audioCtx.destination);
+                    osc2.start();
+                    osc2.stop(audioCtx.currentTime + 0.8);
+                }
+                
+                noteIndex++;
+            }
+            
+            // Starte Loop
+            playNote();
+            startMusicInterval = setInterval(playNote, 500);
+            console.log('🎶 Music interval started!');
+        }
+
+        function stopStartScreenMusic() {
+            if (startMusicInterval) {
+                clearInterval(startMusicInterval);
+                startMusicInterval = null;
+            }
+            if (startMusicGain) {
+                startMusicGain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.3);
+                setTimeout(() => { startMusicGain = null; }, 400);
+            }
+        }
+
+        function playLaserSound() {
+            const oscillator = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+            
+            oscillator.type = 'square';
+            // Original Asteroids Laser: schneller hoher Ton
+            oscillator.frequency.setValueAtTime(1400, audioCtx.currentTime);
+            oscillator.frequency.exponentialRampToValueAtTime(700, audioCtx.currentTime + 0.04);
+            
+            gainNode.gain.setValueAtTime(0.3, audioCtx.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.04);
+            
+            oscillator.start(audioCtx.currentTime);
+            oscillator.stop(audioCtx.currentTime + 0.04);
+        }
+
+        function playExplosionSound() {
+            const oscillator = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+            const filter = audioCtx.createBiquadFilter();
+            
+            oscillator.connect(filter);
+            filter.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+            
+            oscillator.type = 'sawtooth';
+            oscillator.frequency.setValueAtTime(300, audioCtx.currentTime);
+            oscillator.frequency.exponentialRampToValueAtTime(30, audioCtx.currentTime + 0.4);
+            
+            filter.type = 'lowpass';
+            filter.frequency.setValueAtTime(1000, audioCtx.currentTime);
+            filter.frequency.exponentialRampToValueAtTime(100, audioCtx.currentTime + 0.4);
+            
+            gainNode.gain.setValueAtTime(0.6, audioCtx.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.4);
+            
+            oscillator.start(audioCtx.currentTime);
+            oscillator.stop(audioCtx.currentTime + 0.4);
+        }
+
+        function playHeartbeat() {
+            const oscillator = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+            
+            oscillator.type = 'sine';
+            oscillator.frequency.setValueAtTime(80, audioCtx.currentTime);
+            
+            gainNode.gain.setValueAtTime(0.15, audioCtx.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
+            
+            oscillator.start(audioCtx.currentTime);
+            oscillator.stop(audioCtx.currentTime + 0.1);
+        }
+
+        function playThrustSound() {
+            const oscillator = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+            
+            oscillator.type = 'sawtooth';
+            oscillator.frequency.setValueAtTime(40, audioCtx.currentTime);
+            oscillator.frequency.setValueAtTime(60, audioCtx.currentTime + 0.05);
+            
+            gainNode.gain.setValueAtTime(0.08, audioCtx.currentTime);
+            gainNode.gain.setValueAtTime(0.01, audioCtx.currentTime + 0.05);
+            
+            oscillator.start(audioCtx.currentTime);
+            oscillator.stop(audioCtx.currentTime + 0.05);
+        }
+
+        function startUfoSound() {
+            if (gameState.ufoSoundOscillator) return; // Schon aktiv
+            
+            const oscillator = audioCtx.createOscillator();
+            const lfoOsc = audioCtx.createOscillator(); // Low Frequency Oscillator für Modulation
+            const lfoGain = audioCtx.createGain();
+            const gainNode = audioCtx.createGain();
+            
+            oscillator.type = 'sawtooth';
+            
+            // Kleines UFO = höherer, schnellerer Ton (gefährlicher!)
+            if (gameState.ufo.type === 'small') {
+                oscillator.frequency.setValueAtTime(380, audioCtx.currentTime);
+                // LFO moduliert die Frequenz (macht's lebendiger)
+                lfoOsc.frequency.setValueAtTime(6, audioCtx.currentTime); // 6 Hz Modulation
+                lfoGain.gain.setValueAtTime(60, audioCtx.currentTime); // ±60 Hz Schwankung
+            } else {
+                // Großes UFO = tiefer, langsamer Ton
+                oscillator.frequency.setValueAtTime(180, audioCtx.currentTime);
+                lfoOsc.frequency.setValueAtTime(3, audioCtx.currentTime); // 3 Hz Modulation
+                lfoGain.gain.setValueAtTime(30, audioCtx.currentTime); // ±30 Hz Schwankung
+            }
+            
+            // LFO Setup (erzeugt das "Wuuuub-Wuuuub")
+            lfoOsc.connect(lfoGain);
+            lfoGain.connect(oscillator.frequency);
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+            gainNode.gain.setValueAtTime(0.08, audioCtx.currentTime); // Leiser! (war 0.12)
+            
+            oscillator.start();
+            lfoOsc.start();
+            
+            gameState.ufoSoundOscillator = { osc: oscillator, lfo: lfoOsc, gain: gainNode };
+        }
+
+        function stopUfoSound() {
+            if (gameState.ufoSoundOscillator) {
+                gameState.ufoSoundOscillator.osc.stop();
+                gameState.ufoSoundOscillator.lfo.stop();
+                gameState.ufoSoundOscillator = null;
+            }
+        }
+
+        // Game-State
+        let gameState = {
+            ship: null,
+            asteroids: [],
+            bullets: [],
+            ufoBullets: [],
+            particles: [],
+            ufo: null,
+            ufoSpawnTimer: 0,
+            score: 0,
+            highScore: parseInt(localStorage.getItem('asteroidsHighScore')) || 0,
+            lives: 3,
+            wave: 1, // WAVE-SYSTEM!
+            gameOver: false,
+            gameStarted: false,
+            invulnerable: 0,
+            heartbeatTimer: 0,
+            heartbeatInterval: 60,
+            ufoSoundOscillator: null,
+            bonusShipAwarded: false,
+            hyperspaceCooldown: 0
+        };
+
+        const keys = {};
+
+        // Event-Listener
+        document.addEventListener('keydown', (e) => {
+            keys[e.key] = true;
+            if (e.key === ' ') {
+                e.preventDefault();
+                if (!gameState.gameStarted) {
+                    startGame();
+                } else if (gameState.gameOver) {
+                    initGame();
+                } else {
+                    shoot();
+                }
+            }
+            if (e.key === 'Shift' && gameState.gameStarted && !gameState.gameOver) {
+                e.preventDefault();
+                hyperspace();
+            }
+        });
+
+        document.addEventListener('keyup', (e) => {
+            keys[e.key] = false;
+        });
+
+        // MOBILE CONTROLS SETUP
+        const mobileControls = document.getElementById('mobileControls');
+        const btnLeft = document.getElementById('btnLeft');
+        const btnRight = document.getElementById('btnRight');
+        const btnThrust = document.getElementById('btnThrust');
+        const btnFire = document.getElementById('btnFire');
+        const btnHyper = document.getElementById('btnHyper');
+
+        // Detect if device has touch support
+        const isTouchDevice = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
+        
+        if (isTouchDevice) {
+            mobileControls.classList.add('active');
+            
+            // Prevent default touch behaviors
+            const preventDefaults = (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+            };
+
+            // LEFT button
+            btnLeft.addEventListener('touchstart', (e) => {
+                preventDefaults(e);
+                keys['ArrowLeft'] = true;
+            });
+            btnLeft.addEventListener('touchend', (e) => {
+                preventDefaults(e);
+                keys['ArrowLeft'] = false;
+            });
+
+            // RIGHT button
+            btnRight.addEventListener('touchstart', (e) => {
+                preventDefaults(e);
+                keys['ArrowRight'] = true;
+            });
+            btnRight.addEventListener('touchend', (e) => {
+                preventDefaults(e);
+                keys['ArrowRight'] = false;
+            });
+
+            // THRUST button
+            btnThrust.addEventListener('touchstart', (e) => {
+                preventDefaults(e);
+                keys['ArrowUp'] = true;
+            });
+            btnThrust.addEventListener('touchend', (e) => {
+                preventDefaults(e);
+                keys['ArrowUp'] = false;
+            });
+
+            // FIRE button
+            btnFire.addEventListener('touchstart', (e) => {
+                preventDefaults(e);
+                if (gameState.gameStarted && !gameState.gameOver) {
+                    shoot();
+                }
+            });
+            btnFire.addEventListener('touchend', (e) => {
+                preventDefaults(e);
+            });
+
+            // HYPERSPACE button
+            btnHyper.addEventListener('touchstart', (e) => {
+                preventDefaults(e);
+                if (gameState.gameStarted && !gameState.gameOver) {
+                    hyperspace();
+                }
+            });
+            btnHyper.addEventListener('touchend', (e) => {
+                preventDefaults(e);
+            });
+        }
+
+        // Ship-Klasse
+        class Ship {
+            constructor() {
+                this.x = canvas.width / 2;
+                this.y = canvas.height / 2;
+                this.angle = -Math.PI / 2;
+                this.velocity = { x: 0, y: 0 };
+                this.thrust = 0.15;
+                this.friction = 0.998; // FAST KEIN Abbremsen! Muss gegenfeuern zum Stoppen!
+                this.rotationSpeed = 0.05; // FEINERE STEUERUNG! (war 0.08)
+            }
+
+            update() {
+                // Rotation
+                if (keys['ArrowLeft']) this.angle -= this.rotationSpeed;
+                if (keys['ArrowRight']) this.angle += this.rotationSpeed;
+
+                // Schub
+                if (keys['ArrowUp']) {
+                    this.velocity.x += Math.cos(this.angle) * this.thrust;
+                    this.velocity.y += Math.sin(this.angle) * this.thrust;
+                    
+                    // Thrust sound (alle 10 Frames)
+                    if (Math.floor(Date.now() / 100) % 1 === 0) {
+                        playThrustSound();
+                    }
+                }
+
+                // Bremsen (Throttle)
+                if (keys['ArrowDown']) {
+                    this.velocity.x *= 0.95;
+                    this.velocity.y *= 0.95;
+                }
+
+                // Geschwindigkeit begrenzen
+                const speed = Math.sqrt(this.velocity.x ** 2 + this.velocity.y ** 2);
+                if (speed > 8) {
+                    this.velocity.x = (this.velocity.x / speed) * 8;
+                    this.velocity.y = (this.velocity.y / speed) * 8;
+                }
+
+                // Reibung
+                this.velocity.x *= this.friction;
+                this.velocity.y *= this.friction;
+
+                // Position updaten
+                this.x += this.velocity.x;
+                this.y += this.velocity.y;
+
+                // Wrap around
+                if (this.x < 0) this.x = canvas.width;
+                if (this.x > canvas.width) this.x = 0;
+                if (this.y < 0) this.y = canvas.height;
+                if (this.y > canvas.height) this.y = 0;
+            }
+
+            draw() {
+                ctx.save();
+                ctx.translate(this.x, this.y);
+                ctx.rotate(this.angle);
+                
+                ctx.strokeStyle = gameState.invulnerable > 0 && Math.floor(Date.now() / 100) % 2 === 0 ? '#555' : '#fff';
+                ctx.lineWidth = 1;
+                ctx.beginPath();
+                ctx.moveTo(15, 0);
+                ctx.lineTo(-10, -10);
+                ctx.lineTo(-7, 0);
+                ctx.lineTo(-10, 10);
+                ctx.closePath();
+                ctx.stroke();
+
+                // Thrust-Flamme
+                if (keys['ArrowUp']) {
+                    ctx.beginPath();
+                    ctx.moveTo(-7, 0);
+                    ctx.lineTo(-15, -5);
+                    ctx.lineTo(-15, 5);
+                    ctx.closePath();
+                    ctx.stroke();
+                }
+
+                ctx.restore();
+            }
+
+            getPoints() {
+                const points = [
+                    { x: 15, y: 0 },
+                    { x: -10, y: -10 },
+                    { x: -7, y: 0 },
+                    { x: -10, y: 10 }
+                ];
+                return points.map(p => ({
+                    x: this.x + p.x * Math.cos(this.angle) - p.y * Math.sin(this.angle),
+                    y: this.y + p.x * Math.sin(this.angle) + p.y * Math.cos(this.angle)
+                }));
+            }
+        }
+
+        // Asteroid-Klasse
+        class Asteroid {
+            constructor(x, y, size) {
+                this.x = x;
+                this.y = y;
+                this.size = size; // 3=groß, 2=mittel, 1=klein
+                this.velocity = {
+                    x: (Math.random() - 0.5) * (4.8 - size), // 20% schneller! (war 4)
+                    y: (Math.random() - 0.5) * (4.8 - size)
+                };
+                this.rotation = Math.random() * Math.PI * 2;
+                this.rotationSpeed = (Math.random() - 0.5) * 0.05;
+                this.radius = size * 15;
+                this.points = this.generatePoints();
+            }
+
+            generatePoints() {
+                const points = [];
+                const numPoints = 6 + Math.floor(Math.random() * 4); // 6-9 Punkte (variabler!)
+                for (let i = 0; i < numPoints; i++) {
+                    const angle = (i / numPoints) * Math.PI * 2;
+                    const radius = this.radius * (0.6 + Math.random() * 0.6); // MEHR Variation!
+                    points.push({ x: Math.cos(angle) * radius, y: Math.sin(angle) * radius });
+                }
+                return points;
+            }
+
+            update() {
+                this.x += this.velocity.x;
+                this.y += this.velocity.y;
+                this.rotation += this.rotationSpeed;
+
+                // Wrap around
+                if (this.x < -this.radius) this.x = canvas.width + this.radius;
+                if (this.x > canvas.width + this.radius) this.x = -this.radius;
+                if (this.y < -this.radius) this.y = canvas.height + this.radius;
+                if (this.y > canvas.height + this.radius) this.y = -this.radius;
+            }
+
+            draw() {
+                ctx.save();
+                ctx.translate(this.x, this.y);
+                ctx.rotate(this.rotation);
+                ctx.strokeStyle = '#fff';
+                ctx.lineWidth = 1;
+                ctx.beginPath();
+                this.points.forEach((p, i) => {
+                    if (i === 0) ctx.moveTo(p.x, p.y);
+                    else ctx.lineTo(p.x, p.y);
+                });
+                ctx.closePath();
+                ctx.stroke();
+                ctx.restore();
+            }
+
+            split() {
+                const newAsteroids = [];
+                if (this.size > 1) {
+                    for (let i = 0; i < 2; i++) {
+                        newAsteroids.push(new Asteroid(this.x, this.y, this.size - 1));
+                    }
+                }
+                return newAsteroids;
+            }
+        }
+
+        // Bullet-Klasse
+        class Bullet {
+            constructor(x, y, angle) {
+                this.x = x;
+                this.y = y;
+                this.velocity = {
+                    x: Math.cos(angle) * 8,
+                    y: Math.sin(angle) * 8
+                };
+                this.life = 60; // Frames
+            }
+
+            update() {
+                this.x += this.velocity.x;
+                this.y += this.velocity.y;
+                this.life--;
+
+                // Wrap around
+                if (this.x < 0) this.x = canvas.width;
+                if (this.x > canvas.width) this.x = 0;
+                if (this.y < 0) this.y = canvas.height;
+                if (this.y > canvas.height) this.y = 0;
+            }
+
+            draw() {
+                ctx.fillStyle = '#fff';
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, 2, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+
+        // Particle-Klasse für Explosionen
+        class Particle {
+            constructor(x, y) {
+                this.x = x;
+                this.y = y;
+                const angle = Math.random() * Math.PI * 2;
+                const speed = 1 + Math.random() * 3;
+                this.velocity = {
+                    x: Math.cos(angle) * speed,
+                    y: Math.sin(angle) * speed
+                };
+                this.life = 30 + Math.random() * 20;
+                this.maxLife = this.life;
+            }
+
+            update() {
+                this.x += this.velocity.x;
+                this.y += this.velocity.y;
+                this.life--;
+                
+                // Wrap around
+                if (this.x < 0) this.x = canvas.width;
+                if (this.x > canvas.width) this.x = 0;
+                if (this.y < 0) this.y = canvas.height;
+                if (this.y > canvas.height) this.y = 0;
+            }
+
+            draw() {
+                const alpha = this.life / this.maxLife;
+                ctx.strokeStyle = `rgba(255, 255, 255, ${alpha})`;
+                ctx.lineWidth = 1;
+                ctx.beginPath();
+                ctx.moveTo(this.x, this.y);
+                ctx.lineTo(this.x - this.velocity.x * 2, this.y - this.velocity.y * 2);
+                ctx.stroke();
+            }
+        }
+
+        // UFO-Klasse
+        class UFO {
+            constructor(type = 'large') {
+                this.type = type; // 'large' oder 'small'
+                this.size = type === 'large' ? 45 : 15; // Großes UFO jetzt VIEL größer!
+                
+                // Großes UFO spawnt eher mittig, kleines überall
+                if (type === 'large') {
+                    this.y = canvas.height * 0.3 + Math.random() * canvas.height * 0.4; // Mittleres Drittel
+                } else {
+                    this.y = Math.random() * canvas.height;
+                }
+                
+                this.x = Math.random() < 0.5 ? -this.size : canvas.width + this.size;
+                this.velocity = this.x < 0 ? 2 : -2;
+                if (type === 'small') this.velocity *= 1.8; // Kleines noch schneller
+                this.shootTimer = 0;
+                this.shootInterval = type === 'large' ? 60 : 90; // Großes schießt öfter aber dümmer
+            }
+
+            update() {
+                this.x += this.velocity;
+                
+                // UFO schießt
+                this.shootTimer++;
+                if (this.shootTimer >= this.shootInterval) {
+                    this.shoot();
+                    this.shootTimer = 0;
+                }
+
+                // UFO verlässt Screen
+                if (this.x < -this.size * 2 || this.x > canvas.width + this.size * 2) {
+                    return false; // UFO entfernen
+                }
+                return true;
+            }
+
+            shoot() {
+                const angle = this.type === 'large' 
+                    ? Math.random() * Math.PI * 2 // Zufällig
+                    : Math.atan2(gameState.ship.y - this.y, gameState.ship.x - this.x); // Zielt auf Spieler
+                
+                const bullet = {
+                    x: this.x,
+                    y: this.y,
+                    velocity: {
+                        x: Math.cos(angle) * 4,
+                        y: Math.sin(angle) * 4
+                    },
+                    life: 120
+                };
+                gameState.ufoBullets.push(bullet);
+                playExplosionSound(); // Kurzer Sound für UFO-Schuss
+            }
+
+            draw() {
+                ctx.save();
+                ctx.translate(this.x, this.y);
+                ctx.strokeStyle = '#fff';
+                ctx.lineWidth = 1;
+                
+                // UFO im Original-1979-Stil (kantiger, geometrischer!)
+                const w = this.size;
+                const h = this.size * 0.5;
+                
+                ctx.beginPath();
+                // Obere Kuppel (flacher)
+                ctx.moveTo(-w * 0.35, -h * 0.6);
+                ctx.lineTo(w * 0.35, -h * 0.6);
+                ctx.lineTo(w * 0.6, -h * 0.2);
+                ctx.lineTo(-w * 0.6, -h * 0.2);
+                ctx.closePath();
+                ctx.stroke();
+                
+                // Mittlere Scheibe (Hauptkörper)
+                ctx.beginPath();
+                ctx.moveTo(-w, 0);
+                ctx.lineTo(-w * 0.6, -h * 0.2);
+                ctx.lineTo(w * 0.6, -h * 0.2);
+                ctx.lineTo(w, 0);
+                ctx.lineTo(w * 0.6, h * 0.5);
+                ctx.lineTo(-w * 0.6, h * 0.5);
+                ctx.closePath();
+                ctx.stroke();
+                
+                // Mittellinie (Detail)
+                ctx.beginPath();
+                ctx.moveTo(-w, 0);
+                ctx.lineTo(w, 0);
+                ctx.stroke();
+                
+                ctx.restore();
+            }
+        }
+
+        function shoot() {
+            if (gameState.gameOver) return;
+            const ship = gameState.ship;
+            const bullet = new Bullet(
+                ship.x + Math.cos(ship.angle) * 15,
+                ship.y + Math.sin(ship.angle) * 15,
+                ship.angle
+            );
+            gameState.bullets.push(bullet);
+            playLaserSound();
+        }
+
+        function createExplosion(x, y, count = 8) {
+            for (let i = 0; i < count; i++) {
+                gameState.particles.push(new Particle(x, y));
+            }
+        }
+
+        function hyperspace() {
+            if (gameState.hyperspaceCooldown > 0) return; // Noch im Cooldown
+            
+            // Hyperspace Sound
+            playExplosionSound();
+            
+            // Random neue Position
+            gameState.ship.x = Math.random() * canvas.width;
+            gameState.ship.y = Math.random() * canvas.height;
+            gameState.ship.velocity = { x: 0, y: 0 };
+            
+            // 30% Chance auf Tod durch Hyperspace!
+            const badLuck = Math.random() < 0.3;
+            
+            if (badLuck) {
+                // Pech gehabt - in Gefahr gespawnt
+                createExplosion(gameState.ship.x, gameState.ship.y, 12);
+                gameState.lives--;
+                if (gameState.lives > 0) {
+                    gameState.ship = new Ship();
+                    gameState.invulnerable = 120;
+                } else {
+                    gameState.gameOver = true;
+                    gameOverEl.classList.add('show');
+                }
+            } else {
+                // Safe gelandet
+                gameState.invulnerable = 60;
+            }
+            
+            gameState.hyperspaceCooldown = 120; // 2 Sekunden Cooldown
+        }
+
+        function spawnAsteroids(count) {
+            for (let i = 0; i < count; i++) {
+                let x, y;
+                let attempts = 0;
+                // Spawn außerhalb des Schiffs und verteilt über den Screen
+                do {
+                    // Teile Screen in Quadranten für bessere Verteilung
+                    const quadrant = i % 4;
+                    if (quadrant === 0) {
+                        x = Math.random() * canvas.width / 2;
+                        y = Math.random() * canvas.height / 2;
+                    } else if (quadrant === 1) {
+                        x = canvas.width / 2 + Math.random() * canvas.width / 2;
+                        y = Math.random() * canvas.height / 2;
+                    } else if (quadrant === 2) {
+                        x = Math.random() * canvas.width / 2;
+                        y = canvas.height / 2 + Math.random() * canvas.height / 2;
+                    } else {
+                        x = canvas.width / 2 + Math.random() * canvas.width / 2;
+                        y = canvas.height / 2 + Math.random() * canvas.height / 2;
+                    }
+                    attempts++;
+                } while (
+                    attempts < 20 &&
+                    Math.abs(x - gameState.ship.x) < 150 &&
+                    Math.abs(y - gameState.ship.y) < 150
+                );
+                gameState.asteroids.push(new Asteroid(x, y, 3));
+            }
+        }
+
+        function checkCollision(obj1, obj2, radius) {
+            const dx = obj1.x - obj2.x;
+            const dy = obj1.y - obj2.y;
+            const distance = Math.sqrt(dx * dx + dy * dy);
+            return distance < radius;
+        }
+
+        function startGame() {
+            gameState.gameStarted = true;
+            startScreenEl.classList.add('hide');
+            stopStartScreenMusic(); // Musik stoppen
+            initGame();
+        }
+
+        function initGame() {
+            stopUfoSound(); // Stop any existing UFO sound
+            
+            const resetWave = gameState.gameOver; // Bei Game Over alles zurücksetzen!
+            
+            gameState = {
+                ship: new Ship(),
+                asteroids: [],
+                bullets: [],
+                ufoBullets: [],
+                particles: [],
+                ufo: null,
+                ufoSpawnTimer: 600, // 10 Sekunden bis erstes UFO
+                score: resetWave ? 0 : gameState.score, // Game Over = Score 0!
+                highScore: gameState.highScore,
+                lives: 3,
+                wave: resetWave ? 1 : gameState.wave, // Game Over = Wave 1
+                gameOver: false,
+                gameStarted: true,
+                invulnerable: 120, // 2 Sekunden bei 60 FPS
+                heartbeatTimer: 0,
+                heartbeatInterval: 60,
+                ufoSoundOscillator: null,
+                bonusShipAwarded: false,
+                hyperspaceCooldown: 0
+            };
+            
+            // PROGRESSIVE ASTEROID COUNT!
+            // Wave 1: 4, Wave 2: 6, Wave 3: 8, Wave 4+: 10
+            const asteroidCount = Math.min(4 + (gameState.wave - 1) * 2, 10);
+            spawnAsteroids(asteroidCount);
+            
+            gameOverEl.classList.remove('show');
+            updateUI();
+        }
+
+        function updateUI() {
+            scoreEl.textContent = `SCORE: ${gameState.score}`;
+            highScoreEl.textContent = `HIGH: ${gameState.highScore}`;
+            waveEl.textContent = `WAVE: ${gameState.wave}`;
+            livesEl.textContent = `LIVES: ${gameState.lives}`;
+            
+            // Bonus Ship bei 10.000 Punkten
+            if (gameState.score >= 10000 && !gameState.bonusShipAwarded) {
+                gameState.lives++;
+                gameState.bonusShipAwarded = true;
+                // Indicator ausblenden
+                document.getElementById('bonusShip').style.display = 'none';
+            }
+            
+            // High Score speichern
+            if (gameState.score > gameState.highScore) {
+                gameState.highScore = gameState.score;
+                localStorage.setItem('asteroidsHighScore', gameState.highScore);
+            }
+        }
+
+        function gameLoop() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            if (gameState.gameStarted && !gameState.gameOver) {
+                // Heartbeat Sound (schneller je weniger Asteroiden)
+                gameState.heartbeatTimer++;
+                const asteroidCount = gameState.asteroids.length;
+                // Je weniger Asteroiden, desto schneller der Heartbeat
+                gameState.heartbeatInterval = Math.max(20, 80 - (20 - asteroidCount) * 3);
+                
+                if (gameState.heartbeatTimer >= gameState.heartbeatInterval) {
+                    playHeartbeat();
+                    gameState.heartbeatTimer = 0;
+                }
+
+                // Ship updaten
+                gameState.ship.update();
+                gameState.ship.draw();
+
+                // Hyperspace Cooldown
+                if (gameState.hyperspaceCooldown > 0) {
+                    gameState.hyperspaceCooldown--;
+                }
+
+                // Invulnerability counter
+                if (gameState.invulnerable > 0) {
+                    gameState.invulnerable--;
+                }
+
+                // Particles updaten
+                gameState.particles = gameState.particles.filter(particle => {
+                    particle.update();
+                    particle.draw();
+                    return particle.life > 0;
+                });
+
+                // Bullets updaten
+                gameState.bullets = gameState.bullets.filter(bullet => {
+                    bullet.update();
+                    bullet.draw();
+                    return bullet.life > 0;
+                });
+
+                // UFO Bullets updaten
+                gameState.ufoBullets = gameState.ufoBullets.filter(bullet => {
+                    bullet.x += bullet.velocity.x;
+                    bullet.y += bullet.velocity.y;
+                    bullet.life--;
+                    
+                    // Wrap around
+                    if (bullet.x < 0) bullet.x = canvas.width;
+                    if (bullet.x > canvas.width) bullet.x = 0;
+                    if (bullet.y < 0) bullet.y = canvas.height;
+                    if (bullet.y > canvas.height) bullet.y = 0;
+                    
+                    // Draw
+                    ctx.fillStyle = '#fff';
+                    ctx.beginPath();
+                    ctx.arc(bullet.x, bullet.y, 2, 0, Math.PI * 2);
+                    ctx.fill();
+                    
+                    return bullet.life > 0;
+                });
+
+                // UFO spawnen
+                gameState.ufoSpawnTimer--;
+                if (gameState.ufoSpawnTimer <= 0 && !gameState.ufo) {
+                    const type = Math.random() < 0.5 ? 'large' : 'small';
+                    gameState.ufo = new UFO(type);
+                    gameState.ufoSpawnTimer = 600 + Math.random() * 600; // 10-20 Sekunden
+                    startUfoSound(); // UFO Sound starten!
+                }
+
+                // UFO updaten
+                if (gameState.ufo) {
+                    if (!gameState.ufo.update()) {
+                        gameState.ufo = null; // UFO hat Screen verlassen
+                        stopUfoSound(); // UFO Sound stoppen
+                    } else {
+                        gameState.ufo.draw();
+                    }
+                }
+
+                // Asteroids updaten
+                gameState.asteroids.forEach(asteroid => {
+                    asteroid.update();
+                    asteroid.draw();
+                });
+
+                // Kollisionen: Bullets vs Asteroids
+                const newAsteroidsToAdd = [];
+                gameState.bullets = gameState.bullets.filter(bullet => {
+                    let hit = false;
+                    
+                    // Check UFO hit
+                    if (gameState.ufo && checkCollision(bullet, gameState.ufo, gameState.ufo.size)) {
+                        hit = true;
+                        playExplosionSound();
+                        createExplosion(gameState.ufo.x, gameState.ufo.y, 12);
+                        gameState.score += gameState.ufo.type === 'large' ? 200 : 1000; // Kleines UFO = mehr Punkte
+                        gameState.ufo = null;
+                        stopUfoSound(); // UFO Sound stoppen wenn zerstört
+                    }
+                    
+                    // Check Asteroid hit
+                    gameState.asteroids = gameState.asteroids.filter(asteroid => {
+                        if (checkCollision(bullet, asteroid, asteroid.radius)) {
+                            hit = true;
+                            playExplosionSound();
+                            createExplosion(asteroid.x, asteroid.y, asteroid.size * 3);
+                            gameState.score += (4 - asteroid.size) * 20;
+                            const newAsteroids = asteroid.split();
+                            newAsteroidsToAdd.push(...newAsteroids);
+                            return false;
+                        }
+                        return true;
+                    });
+                    return !hit;
+                });
+                gameState.asteroids.push(...newAsteroidsToAdd);
+
+                // Kollisionen: Ship vs Asteroids
+                if (gameState.invulnerable === 0) {
+                    gameState.asteroids.forEach(asteroid => {
+                        if (checkCollision(gameState.ship, asteroid, asteroid.radius + 10)) {
+                            playExplosionSound();
+                            createExplosion(gameState.ship.x, gameState.ship.y, 15);
+                            gameState.lives--;
+                            if (gameState.lives > 0) {
+                                gameState.ship = new Ship();
+                                gameState.invulnerable = 120;
+                            } else {
+                                gameState.gameOver = true;
+                                gameOverEl.classList.add('show');
+                            }
+                        }
+                    });
+                    
+                    // UFO Bullets vs Ship
+                    gameState.ufoBullets = gameState.ufoBullets.filter(bullet => {
+                        if (checkCollision(gameState.ship, bullet, 10)) {
+                            playExplosionSound();
+                            createExplosion(gameState.ship.x, gameState.ship.y, 15);
+                            gameState.lives--;
+                            if (gameState.lives > 0) {
+                                gameState.ship = new Ship();
+                                gameState.invulnerable = 120;
+                            } else {
+                                gameState.gameOver = true;
+                                gameOverEl.classList.add('show');
+                            }
+                            return false; // Bullet entfernen
+                        }
+                        return true;
+                    });
+                }
+
+                // Neues WAVE wenn alle Asteroids zerstört!
+                if (gameState.asteroids.length === 0 && !gameState.ufo) {
+                    gameState.wave++; // NÄCHSTE WAVE!
+                    // Wave 1: 4, Wave 2: 6, Wave 3: 8, Wave 4+: 10
+                    const asteroidCount = Math.min(4 + (gameState.wave - 1) * 2, 10);
+                    spawnAsteroids(asteroidCount);
+                }
+
+                updateUI();
+            }
+
+            requestAnimationFrame(gameLoop);
+        }
+
+        // Start
+        updateUI(); // High Score anzeigen
+        
+        // SIMPLE music start on first click
+        // Start Music on Interaction
+        let musicStartAttempted = false;
+        
+        const clickHandler = (e) => {
+            console.log('🎯 Click handler triggered');
+            if (!musicStartAttempted && !gameState.gameStarted && !startMusicInterval) {
+                musicStartAttempted = true;
+                console.log('▶️ Attempting to start music...');
+                
+                // Remove listeners immediately to prevent re-triggering
+                window.removeEventListener('click', clickHandler);
+                window.removeEventListener('keydown', keyHandler);
+                
+                // Resume audio context (required by browsers)
+                if (audioCtx.state === 'suspended') {
+                    console.log('🔊 Resuming suspended audioContext...');
+                    audioCtx.resume().then(() => {
+                        console.log('✅ AudioContext resumed, starting music...');
+                        startStartScreenMusic();
+                    });
+                } else {
+                    console.log('✅ AudioContext already running, starting music...');
+                    startStartScreenMusic();
+                }
+            }
+        };
+        
+        const keyHandler = (e) => {
+            console.log('⌨️ Key handler triggered');
+            clickHandler(e);
+        };
+        
+        // Add listeners
+        console.log('📌 Adding listeners...');
+        window.addEventListener('click', clickHandler);
+        window.addEventListener('touchstart', clickHandler); // Touch support!
+        window.addEventListener('keydown', keyHandler);
+        
+        // AUTO-START: Try multiple times (some browsers need this)
+        setTimeout(() => {
+            console.log('⏰ Auto-start attempt 1');
+            if (audioCtx.state !== 'suspended' && !musicStartAttempted) {
+                clickHandler();
+            } else {
+                console.log('⚠️ AudioContext suspended, will start on user interaction');
+            }
+        }, 100);
+        
+        // Second attempt (for slow browsers)
+        setTimeout(() => {
+            if (audioCtx.state !== 'suspended' && !musicStartAttempted) {
+                console.log('⏰ Auto-start attempt 2');
+                clickHandler();
+            }
+        }, 500);
+        
+        gameLoop();
+    </script>
+</body>
+</html>
