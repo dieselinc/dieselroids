@@ -1196,6 +1196,9 @@
         function startGame() {
             gameState.gameStarted = true;
             startScreenEl.classList.add('hide');
+            startScreenEl.style.display = 'none'; // FORCE HIDE (iPhone fix!)
+            startScreenEl.style.visibility = 'hidden'; // Extra sicher!
+            startScreenEl.style.opacity = '0'; // Dreifach-Absicherung!
             stopStartScreenMusic(); // Musik stoppen
             initGame();
         }
