@@ -694,6 +694,23 @@
                 startScreenEl.style.display = 'block';
                 warningDismissed = true;
                 window.removeEventListener('touchstart', dismissWarning);
+                
+                // SAFARI FIX: Start music on first touch!
+                if (!musicStartAttempted && !startMusicInterval) {
+                    musicStartAttempted = true;
+                    console.log('🎵 Safari: Starting music on warning dismiss...');
+                    
+                    // Resume audio context (required by Safari)
+                    if (audioCtx.state === 'suspended') {
+                        audioCtx.resume().then(() => {
+                            console.log('✅ Safari: AudioContext resumed, starting music...');
+                            startStartScreenMusic();
+                        });
+                    } else {
+                        console.log('✅ Safari: Starting music...');
+                        startStartScreenMusic();
+                    }
+                }
             };
             window.addEventListener('touchstart', dismissWarning);
         }
