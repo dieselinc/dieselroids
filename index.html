@@ -1437,6 +1437,22 @@
         
         const clickHandler = (e) => {
             console.log('🎯 Click handler triggered');
+            
+            // If music is playing but game not started -> START GAME!
+            if (musicStartAttempted && !gameState.gameStarted) {
+                console.log('🎮 Starting game...');
+                startGame();
+                return;
+            }
+            
+            // If game over -> RESTART!
+            if (gameState.gameOver) {
+                console.log('🔄 Restarting game...');
+                initGame();
+                return;
+            }
+            
+            // First interaction -> START MUSIC!
             if (!musicStartAttempted && !gameState.gameStarted && !startMusicInterval) {
                 musicStartAttempted = true;
                 console.log('▶️ Attempting to start music...');
