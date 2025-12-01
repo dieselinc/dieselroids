@@ -191,8 +191,8 @@
         .control-btn {
             width: 85px;
             height: 85px;
-            background: rgba(255, 255, 255, 0.1);
-            border: 3px solid #fff;
+            background: rgba(0, 0, 0, 0.3);
+            border: 2px solid rgba(255, 255, 255, 0.8);
             color: #fff;
             font-family: 'Courier New', monospace;
             font-size: 32px;
@@ -212,36 +212,41 @@
         }
 
         .control-btn:active {
-            background: rgba(255, 255, 255, 0.3);
+            background: rgba(255, 255, 255, 0.2);
+            border-color: #fff;
             transform: scale(0.95);
         }
 
+        /* Remove all colored button styles - keep it minimal! */
         .control-btn.thrust {
-            background: rgba(0, 255, 0, 0.1);
-            border-color: #0f0;
+            background: rgba(0, 0, 0, 0.3);
+            border-color: rgba(255, 255, 255, 0.8);
         }
 
         .control-btn.thrust:active {
-            background: rgba(0, 255, 0, 0.3);
+            background: rgba(255, 255, 255, 0.2);
+            border-color: #fff;
         }
 
         .control-btn.fire {
-            background: rgba(255, 0, 0, 0.1);
-            border-color: #f00;
+            background: rgba(0, 0, 0, 0.3);
+            border-color: rgba(255, 255, 255, 0.8);
         }
 
         .control-btn.fire:active {
-            background: rgba(255, 0, 0, 0.3);
+            background: rgba(255, 255, 255, 0.2);
+            border-color: #fff;
         }
 
         .control-btn.hyper {
-            background: rgba(255, 255, 0, 0.1);
-            border-color: #ff0;
-            font-size: 28px;
+            background: rgba(0, 0, 0, 0.3);
+            border-color: rgba(255, 255, 255, 0.8);
+            font-size: 32px;
         }
 
         .control-btn.hyper:active {
-            background: rgba(255, 255, 0, 0.3);
+            background: rgba(255, 255, 255, 0.2);
+            border-color: #fff;
         }
 
         /* Hide instructions on mobile when controls are active */
@@ -358,12 +363,12 @@
         
         <div id="mobileControls">
             <div class="control-group-left">
-                <button id="btnFire" class="control-btn fire">●<br><span class="btn-label">FIRE</span></button>
-                <button id="btnHyper" class="control-btn hyper">⚡<br><span class="btn-label">HYPER</span></button>
+                <button id="btnFire" class="control-btn fire">F</button>
+                <button id="btnHyper" class="control-btn hyper">H</button>
             </div>
             <div class="control-group-right">
                 <button id="btnLeft" class="control-btn">◄</button>
-                <button id="btnThrust" class="control-btn thrust">▲<br><span class="btn-label">THRUST</span></button>
+                <button id="btnThrust" class="control-btn thrust">T<br>▲</button>
                 <button id="btnRight" class="control-btn">►</button>
             </div>
         </div>
@@ -1629,34 +1634,39 @@
                 const centerX = canvas.width / 2;
                 const centerY = canvas.height / 2;
                 
+                // Responsive sizing for mobile
+                const isMobile = window.innerWidth <= 768;
+                const isSmallMobile = window.innerWidth <= 430; // iPhone size
+                
                 ctx.save();
                 ctx.globalAlpha = 1.0;
                 const title = "DIESELROIDS";
-                const titleSize = 5.5;
-                const titleSpacing = 18;
+                const titleSize = isSmallMobile ? 3 : (isMobile ? 4 : 5.5);
+                const titleSpacing = isSmallMobile ? 12 : (isMobile ? 14 : 18);
                 const titleWidth = title.length * titleSpacing * titleSize;
-                VectorFont.drawText(ctx, title, centerX - titleWidth / 2, centerY - 120, titleSize, titleSpacing);
+                VectorFont.drawText(ctx, title, centerX - titleWidth / 2, centerY - (isSmallMobile ? 80 : 120), titleSize, titleSpacing);
                 ctx.restore();
                 
                 ctx.save();
                 ctx.globalAlpha = 0.6;
-                const subtitle = "A TRIBUTE TO THE 1979 ARCADE CLASSIC ASTEROIDS";
-                const subSize = 1.2;
-                const subSpacing = 10;
+                const subtitle = isSmallMobile ? "A TRIBUTE TO ASTEROIDS 1979" : "A TRIBUTE TO THE 1979 ARCADE CLASSIC ASTEROIDS";
+                const subSize = isSmallMobile ? 0.8 : (isMobile ? 1 : 1.2);
+                const subSpacing = isSmallMobile ? 8 : 10;
                 const subWidth = subtitle.length * subSpacing * subSize;
-                VectorFont.drawText(ctx, subtitle, centerX - subWidth / 2, centerY - 20, subSize, subSpacing);
+                VectorFont.drawText(ctx, subtitle, centerX - subWidth / 2, centerY - (isSmallMobile ? 10 : 20), subSize, subSpacing);
                 ctx.restore();
                 
                 ctx.save();
                 ctx.globalAlpha = 0.8;
-                const startText = "PRESS SPACE TO START";
-                const startSize = 2.5;
-                const startSpacing = 14;
+                const startText = isSmallMobile ? "TAP TO START" : "PRESS SPACE TO START";
+                const startSize = isSmallMobile ? 1.5 : (isMobile ? 2 : 2.5);
+                const startSpacing = isSmallMobile ? 10 : (isMobile ? 12 : 14);
                 const startWidth = startText.length * startSpacing * startSize;
-                VectorFont.drawText(ctx, startText, centerX - startWidth / 2, centerY + 140, startSize, startSpacing);
+                VectorFont.drawText(ctx, startText, centerX - startWidth / 2, centerY + (isSmallMobile ? 80 : 140), startSize, startSpacing);
                 ctx.restore();
                 
-                if (window.innerWidth <= 768) {
+                // Mobile hint only on larger screens (not tiny phones)
+                if (isMobile && !isSmallMobile) {
                     ctx.save();
                     ctx.globalAlpha = 0.6;
                     const mobileText = "TAP ANYWHERE TO START";
@@ -1668,11 +1678,11 @@
                 }
                 
                 ctx.save();
-                ctx.font = '10px monospace';
+                ctx.font = isSmallMobile ? '8px monospace' : '10px monospace';
                 ctx.fillStyle = '#fff';
                 ctx.globalAlpha = 0.4;
                 ctx.textAlign = 'right';
-                ctx.fillText('© 2025 DIESEL INC.', canvas.width - 20, canvas.height - 20);
+                ctx.fillText('© 2025 DIESEL INC.', canvas.width - (isSmallMobile ? 10 : 20), canvas.height - (isSmallMobile ? 10 : 20));
                 ctx.restore();
                 
                 requestAnimationFrame(gameLoop);
