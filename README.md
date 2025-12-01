@@ -1,6 +1,6 @@
 # 🚀 DIESELROIDS: A Tribute to the 1979 Arcade Classic
 
-![DIESELROIDS Logo](DIESELROIDS%20LOGO.png)
+![DIESELROIDS Logo](preview.png)
 
 ## 🕹️ Play Now!
 **Play the game instantly in your browser:**
