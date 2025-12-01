@@ -351,10 +351,7 @@
                 DIESELROIDS works best on<br>
                 <strong>DESKTOP & iPAD</strong>
             </div>
-            <div style="font-size: 14px; opacity: 0.7; margin-bottom: 30px;">
-                For optimal experience, use a larger screen.
-            </div>
-            <p style="font-size: 16px; animation: blink 1.5s infinite;">TAP TO CONTINUE ANYWAY</p>
+            <p style="font-size: 16px; animation: blink 1.5s infinite;">TAP TO CONTINUE</p>
         </div>
         <div id="gameOver">
             GAME OVER<br>
@@ -485,6 +482,33 @@
                 ],
                 'I': [
                     [[5,0], [5,10]]
+                ],
+                'B': [
+                    [[2,10], [2,0]], [[2,0], [7,0]], [[7,0], [8,2]], [[8,2], [7,5]], [[7,5], [2,5]], [[7,5], [8,7]], [[8,7], [7,10]], [[7,10], [2,10]]
+                ],
+                'F': [
+                    [[2,10], [2,0]], [[2,0], [8,0]], [[2,5], [7,5]]
+                ],
+                'H': [
+                    [[2,0], [2,10]], [[8,0], [8,10]], [[2,5], [8,5]]
+                ],
+                'U': [
+                    [[2,0], [2,10]], [[2,10], [8,10]], [[8,10], [8,0]]
+                ],
+                'K': [
+                    [[2,0], [2,10]], [[8,0], [2,5]], [[2,5], [8,10]]
+                ],
+                'J': [
+                    [[5,0], [5,8]], [[5,8], [3,10]], [[3,10], [2,10]]
+                ],
+                'Q': [
+                    [[2,0], [8,0]], [[8,0], [8,10]], [[8,10], [2,10]], [[2,10], [2,0]], [[6,8], [9,11]]
+                ],
+                'X': [
+                    [[2,0], [8,10]], [[8,0], [2,10]]
+                ],
+                'Z': [
+                    [[2,0], [8,0]], [[8,0], [2,10]], [[2,10], [8,10]]
                 ],
                 ' ': [] // Space
             },
@@ -1648,9 +1672,9 @@
                 ctx.save();
                 ctx.globalAlpha = 1.0;
                 const title = "DIESELROIDS";
-                // iPhone: 2.5, iPad: 3.5, Desktop: 5.5
-                const titleSize = isSmallMobile ? 2.5 : (isMediumMobile ? 3.5 : 5.5);
-                const titleSpacing = isSmallMobile ? 11 : (isMediumMobile ? 13 : 18);
+                // iPhone: 2.5, iPad: 3.0 (was 3.5!), Desktop: 5.5
+                const titleSize = isSmallMobile ? 2.5 : (isMediumMobile ? 3.0 : 5.5);
+                const titleSpacing = isSmallMobile ? 11 : (isMediumMobile ? 12 : 18);
                 const titleWidth = title.length * titleSpacing * titleSize;
                 const titleY = isSmallMobile ? centerY - 100 : (isMediumMobile ? centerY - 100 : centerY - 120);
                 VectorFont.drawText(ctx, title, centerX - titleWidth / 2, titleY, titleSize, titleSpacing);
