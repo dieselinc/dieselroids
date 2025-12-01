@@ -902,37 +902,9 @@
         const screenWarning = document.getElementById('screenWarning');
         let warningDismissed = false;
         
-        // Show warning on small screens (iPhone)
-        if (isTouchDevice && isSmallScreen) {
-            screenWarning.classList.add('show');
-            startScreenEl.style.display = 'none';
-            
-            // Dismiss warning on tap
-            const dismissWarning = () => {
-                screenWarning.classList.remove('show');
-                startScreenEl.style.display = 'block';
-                warningDismissed = true;
-                window.removeEventListener('touchstart', dismissWarning);
-                
-                // SAFARI FIX: Start music on first touch!
-                if (!musicStartAttempted && !startMusicInterval) {
-                    musicStartAttempted = true;
-                    console.log('🎵 Safari: Starting music on warning dismiss...');
-                    
-                    // Resume audio context (required by Safari)
-                    if (audioCtx.state === 'suspended') {
-                        audioCtx.resume().then(() => {
-                            console.log('✅ Safari: AudioContext resumed, starting music...');
-                            startStartScreenMusic();
-                        });
-                    } else {
-                        console.log('✅ Safari: Starting music...');
-                        startStartScreenMusic();
-                    }
-                }
-            };
-            window.addEventListener('touchstart', dismissWarning);
-        }
+        // NO WARNING OVERLAY ANYMORE! Just show the game directly!
+        // iPhone users will see the vector font startscreen immediately
+        // (Warning was too cluttered and confusing)
         
         if (isTouchDevice) {
             mobileControls.classList.add('active');
@@ -1670,21 +1642,22 @@
                 ctx.save();
                 ctx.globalAlpha = 1.0;
                 const title = "DIESELROIDS";
-                // iPhone: 2.5, iPad: 2.7 (SMALLER!), Desktop: 5.5
-                const titleSize = isSmallMobile ? 2.5 : (isMediumMobile ? 2.7 : 5.5);
-                const titleSpacing = isSmallMobile ? 11 : (isMediumMobile ? 11 : 18);
+                // Size: iPhone 2.2, iPad 2.5, Desktop 5.5
+                // The problem might be SPACING not SIZE!
+                const titleSize = isSmallMobile ? 2.2 : (isMediumMobile ? 2.5 : 5.5);
+                const titleSpacing = isSmallMobile ? 9 : (isMediumMobile ? 8 : 18); // iPad: 8 instead of 10!
                 const titleWidth = title.length * titleSpacing * titleSize;
-                const titleY = isSmallMobile ? centerY - 100 : (isMediumMobile ? centerY - 100 : centerY - 120);
+                const titleY = isSmallMobile ? centerY - 120 : (isMediumMobile ? centerY - 110 : centerY - 120);
                 VectorFont.drawText(ctx, title, centerX - titleWidth / 2, titleY, titleSize, titleSpacing);
                 ctx.restore();
                 
                 ctx.save();
                 ctx.globalAlpha = 0.6;
                 const subtitle = isSmallMobile ? "A TRIBUTE TO ASTEROIDS 1979" : "A TRIBUTE TO THE 1979 ARCADE CLASSIC ASTEROIDS";
-                const subSize = isSmallMobile ? 0.7 : (isMediumMobile ? 0.9 : 1.2);
-                const subSpacing = isSmallMobile ? 7 : (isMediumMobile ? 9 : 10);
+                const subSize = isSmallMobile ? 0.6 : (isMediumMobile ? 0.7 : 1.2);
+                const subSpacing = isSmallMobile ? 6 : (isMediumMobile ? 7 : 10);
                 const subWidth = subtitle.length * subSpacing * subSize;
-                const subY = isSmallMobile ? centerY - 20 : (isMediumMobile ? centerY - 15 : centerY - 20);
+                const subY = isSmallMobile ? centerY - 30 : (isMediumMobile ? centerY - 25 : centerY - 20);
                 VectorFont.drawText(ctx, subtitle, centerX - subWidth / 2, subY, subSize, subSpacing);
                 ctx.restore();
                 
@@ -1700,6 +1673,18 @@
                 
                 // NO "TAP ANYWHERE" hint anymore - too cluttered!
                 // Just "TAP TO START" or "PRESS SPACE TO START" is enough!
+                
+                // iPhone: Simple hint at bottom
+                if (isSmallMobile) {
+                    ctx.save();
+                    ctx.font = '12px monospace';
+                    ctx.fillStyle = '#fff';
+                    ctx.globalAlpha = 0.5;
+                    ctx.textAlign = 'center';
+                    ctx.fillText('works best on', centerX, canvas.height - 50);
+                    ctx.fillText('DESKTOP & iPAD', centerX, canvas.height - 35);
+                    ctx.restore();
+                }
                 
                 ctx.save();
                 ctx.font = isSmallMobile ? '8px monospace' : '10px monospace';
