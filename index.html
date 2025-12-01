@@ -45,11 +45,19 @@
             top: 20px;
             left: 20px;
             right: 20px;
-            display: flex;
+            display: none !important; /* HIDDEN - Canvas Vector Font used! */
             justify-content: space-between;
             font-size: 20px;
             text-shadow: 0 0 10px #fff;
             pointer-events: none;
+        }
+        
+        #livesCanvas {
+            display: none !important; /* HIDDEN - Canvas Vector Font used! */
+        }
+        
+        #bonusShip {
+            display: none !important; /* HIDDEN - Canvas Vector Font used! */
         }
 
         #gameOver {
@@ -60,11 +68,11 @@
             text-align: center;
             font-size: 32px;
             text-shadow: 0 0 20px #fff;
-            display: none;
+            display: none !important; /* HIDDEN - Canvas Vector Font used! */
         }
 
         #gameOver.show {
-            display: block;
+            display: none !important; /* Force hidden! */
         }
 
         #screenWarning {
@@ -86,11 +94,12 @@
 
         #startScreen {
             position: absolute;
-            top: 35%; /* Höher! (war 50%) */
+            top: 35%;
             left: 50%;
             transform: translate(-50%, -50%);
             text-align: center;
             z-index: 10;
+            display: none; /* Use Canvas Vector Font instead */
         }
 
         #startScreen.hide {
@@ -125,6 +134,11 @@
             51%, 100% { opacity: 0.3; }
         }
 
+        @keyframes waveFlash {
+            0%, 100% { opacity: 0; transform: translate(-50%, -50%) scale(0.8); }
+            10%, 90% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+        }
+
         #instructions {
             position: absolute;
             bottom: 20px;
@@ -144,6 +158,7 @@
             opacity: 0.6;
             letter-spacing: 1px;
             line-height: 1.6;
+            display: none !important; /* HIDDEN - Canvas version used! */
         }
 
         /* MOBILE CONTROLS */
@@ -295,13 +310,24 @@
 <body>
     <div id="gameContainer">
         <canvas id="gameCanvas"></canvas>
+        
+        <!-- NEW: Clean UI like original -->
         <div id="ui">
-            <div id="score">SCORE: 0</div>
-            <div id="highScore">HIGH: 0</div>
-            <div id="wave">WAVE: 1</div>
-            <div id="lives">LIVES: 3</div>
-            <div id="bonusShip" style="font-size: 12px; opacity: 0.7;">BONUS SHIP AT 10000</div>
+            <div style="position: absolute; top: 20px; left: 20px;">
+                <div id="score" style="font-family: monospace; font-size: 20px; letter-spacing: 2px;">0000</div>
+                <canvas id="livesCanvas" width="100" height="30" style="margin-top: 10px;"></canvas>
+            </div>
+            <div style="position: absolute; top: 20px; left: 50%; transform: translateX(-50%);">
+                <div id="wave" style="font-family: monospace; font-size: 20px; letter-spacing: 2px;">00</div>
+            </div>
+            <div style="position: absolute; top: 20px; right: 20px;">
+                <div id="bonusShip" style="font-size: 12px; opacity: 0.7;">BONUS SHIP AT 10000</div>
+            </div>
         </div>
+        
+        <!-- Wave Complete Display -->
+        <div id="waveComplete" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 64px; letter-spacing: 8px; display: none; z-index: 20;"></div>
+        
         <div id="startScreen">
             <h1>DIESELROIDS</h1>
             <div class="tagline">A TRIBUTE TO THE 1979 ARCADE CLASSIC ASTEROIDS</div>
@@ -346,10 +372,11 @@
     <script>
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
+        const livesCanvas = document.getElementById('livesCanvas');
+        const livesCtx = livesCanvas.getContext('2d');
         const scoreEl = document.getElementById('score');
-        const highScoreEl = document.getElementById('highScore');
         const waveEl = document.getElementById('wave');
-        const livesEl = document.getElementById('lives');
+        const waveCompleteEl = document.getElementById('waveComplete');
         const gameOverEl = document.getElementById('gameOver');
         const startScreenEl = document.getElementById('startScreen');
 
@@ -360,6 +387,164 @@
         }
         resizeCanvas();
         window.addEventListener('resize', resizeCanvas);
+
+        // =====================================================
+        // VECTOR TYPOGRAPHY SYSTEM (Atari-Style)
+        // =====================================================
+        const VectorFont = {
+            // Each character defined as line segments with dots at endpoints
+            chars: {
+                '0': [
+                    [[2,0], [8,0]], [[8,0], [8,10]], [[8,10], [2,10]], [[2,10], [2,0]]
+                ],
+                '1': [
+                    [[5,0], [5,10]], [[4,1], [5,0]]
+                ],
+                '2': [
+                    [[2,0], [8,0]], [[8,0], [8,5]], [[8,5], [2,5]], [[2,5], [2,10]], [[2,10], [8,10]]
+                ],
+                '3': [
+                    [[2,0], [8,0]], [[8,0], [8,10]], [[8,10], [2,10]], [[8,5], [4,5]]
+                ],
+                '4': [
+                    [[2,0], [2,5]], [[2,5], [8,5]], [[8,0], [8,10]]
+                ],
+                '5': [
+                    [[8,0], [2,0]], [[2,0], [2,5]], [[2,5], [8,5]], [[8,5], [8,10]], [[8,10], [2,10]]
+                ],
+                '6': [
+                    [[8,0], [2,0]], [[2,0], [2,10]], [[2,10], [8,10]], [[8,10], [8,5]], [[8,5], [2,5]]
+                ],
+                '7': [
+                    [[2,0], [8,0]], [[8,0], [8,10]]
+                ],
+                '8': [
+                    [[2,0], [8,0]], [[8,0], [8,10]], [[8,10], [2,10]], [[2,10], [2,0]], [[2,5], [8,5]]
+                ],
+                '9': [
+                    [[8,10], [8,0]], [[8,0], [2,0]], [[2,0], [2,5]], [[2,5], [8,5]]
+                ],
+                'A': [
+                    [[2,10], [2,0]], [[2,0], [8,0]], [[8,0], [8,10]], [[2,5], [8,5]]
+                ],
+                'W': [
+                    [[2,0], [3,10]], [[3,10], [5,5]], [[5,5], [7,10]], [[7,10], [8,0]]
+                ],
+                'V': [
+                    [[2,0], [5,10]], [[5,10], [8,0]]
+                ],
+                'E': [
+                    [[8,0], [2,0]], [[2,0], [2,10]], [[2,10], [8,10]], [[2,5], [7,5]]
+                ],
+                'C': [
+                    [[8,0], [2,0]], [[2,0], [2,10]], [[2,10], [8,10]]
+                ],
+                'N': [
+                    [[2,10], [2,0]], [[2,0], [8,10]], [[8,10], [8,0]]
+                ],
+                'G': [
+                    [[8,0], [2,0]], [[2,0], [2,10]], [[2,10], [8,10]], [[8,10], [8,5]], [[8,5], [5,5]]
+                ],
+                'M': [
+                    [[2,10], [2,0]], [[2,0], [5,5]], [[5,5], [8,0]], [[8,0], [8,10]]
+                ],
+                'O': [
+                    [[2,0], [8,0]], [[8,0], [8,10]], [[8,10], [2,10]], [[2,10], [2,0]]
+                ],
+                'R': [
+                    [[2,10], [2,0]], [[2,0], [8,0]], [[8,0], [8,5]], [[8,5], [2,5]], [[5,5], [8,10]]
+                ],
+                'P': [
+                    [[2,10], [2,0]], [[2,0], [8,0]], [[8,0], [8,5]], [[8,5], [2,5]]
+                ],
+                'L': [
+                    [[2,0], [2,10]], [[2,10], [8,10]]
+                ],
+                'Y': [
+                    [[2,0], [5,5]], [[8,0], [5,5]], [[5,5], [5,10]]
+                ],
+                'S': [
+                    [[8,0], [2,0]], [[2,0], [2,5]], [[2,5], [8,5]], [[8,5], [8,10]], [[8,10], [2,10]]
+                ],
+                'T': [
+                    [[2,0], [8,0]], [[5,0], [5,10]]
+                ],
+                'D': [
+                    [[2,10], [2,0]], [[2,0], [7,0]], [[7,0], [8,2]], [[8,2], [8,8]], [[8,8], [7,10]], [[7,10], [2,10]]
+                ],
+                'I': [
+                    [[5,0], [5,10]]
+                ],
+                ' ': [] // Space
+            },
+            
+            // Draw text with vector font
+            drawText(ctx, text, x, y, size = 1, spacing = 12) {
+                let currentX = x;
+                
+                for (let char of text) {
+                    const charData = this.chars[char.toUpperCase()];
+                    if (!charData) continue;
+                    
+                    ctx.save();
+                    ctx.translate(currentX, y);
+                    ctx.scale(size, size);
+                    
+                    ctx.strokeStyle = '#fff';
+                    ctx.fillStyle = '#fff';
+                    ctx.lineWidth = 1 / size;
+                    
+                    // Draw lines
+                    charData.forEach(line => {
+                        ctx.beginPath();
+                        ctx.moveTo(line[0][0], line[0][1]);
+                        ctx.lineTo(line[1][0], line[1][1]);
+                        ctx.stroke();
+                        
+                        // Draw dots at line endpoints (characteristic Atari style!)
+                        [line[0], line[1]].forEach(point => {
+                            ctx.beginPath();
+                            ctx.arc(point[0], point[1], 0.8 / size, 0, Math.PI * 2);
+                            ctx.fill();
+                        });
+                    });
+                    
+                    ctx.restore();
+                    currentX += spacing * size;
+                }
+            }
+        };
+
+        // Draw Ship Symbol for Lives display
+        function drawShipSymbol(x, y, size = 1) {
+            ctx.save();
+            ctx.translate(x, y);
+            ctx.rotate(-Math.PI / 2); // Point up
+            ctx.scale(size, size);
+            
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.8)';
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+            ctx.lineWidth = 1 / size;
+            
+            // Draw ship outline
+            ctx.beginPath();
+            ctx.moveTo(12, 0);
+            ctx.lineTo(-8, -7);
+            ctx.lineTo(-5, 0);
+            ctx.lineTo(-8, 7);
+            ctx.closePath();
+            ctx.stroke();
+            
+            // Dots at vertices
+            const points = [{x: 12, y: 0}, {x: -8, y: -7}, {x: -5, y: 0}, {x: -8, y: 7}];
+            points.forEach(p => {
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, 0.8 / size, 0, Math.PI * 2);
+                ctx.fill();
+            });
+            
+            ctx.restore();
+        }
 
         // Audio-Kontext für Laser-Sound
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -625,12 +810,13 @@
             bullets: [],
             ufoBullets: [],
             particles: [],
+            shipExplosionSegments: [],
             ufo: null,
             ufoSpawnTimer: 0,
             score: 0,
             highScore: parseInt(localStorage.getItem('asteroidsHighScore')) || 0,
             lives: 3,
-            wave: 1, // WAVE-SYSTEM!
+            wave: 1,
             gameOver: false,
             gameStarted: false,
             invulnerable: 0,
@@ -638,7 +824,10 @@
             heartbeatInterval: 60,
             ufoSoundOscillator: null,
             bonusShipAwarded: false,
-            hyperspaceCooldown: 0
+            hyperspaceCooldown: 0,
+            showingWaveComplete: false,
+            waveCompleteText: '',
+            waveCompleteTimer: 0
         };
 
         const keys = {};
@@ -903,11 +1092,27 @@
 
             generatePoints() {
                 const points = [];
-                const numPoints = 4 + Math.floor(Math.random() * 7); // 4-10 Punkte! VIEL variabler!
+                const numPoints = 6 + Math.floor(Math.random() * 6); // 6-11 Punkte für mehr Detail
+                
+                // Random shape style
+                const shapeStyle = Math.random();
+                
                 for (let i = 0; i < numPoints; i++) {
                     const angle = (i / numPoints) * Math.PI * 2;
-                    // Mehr Variation: 0.5-1.3x statt 0.6-1.2x = kantigere, interessantere Formen!
-                    const radiusVariation = 0.5 + Math.random() * 0.8;
+                    let radiusVariation;
+                    
+                    if (shapeStyle < 0.3) {
+                        // ANGULAR/ROCKY - sehr kantig
+                        radiusVariation = Math.random() < 0.5 ? 0.5 + Math.random() * 0.3 : 0.9 + Math.random() * 0.4;
+                    } else if (shapeStyle < 0.6) {
+                        // MUSHROOM/PILLOW - eine Seite dicker
+                        const side = Math.cos(angle - Math.random() * Math.PI);
+                        radiusVariation = side > 0 ? 0.9 + Math.random() * 0.4 : 0.5 + Math.random() * 0.3;
+                    } else {
+                        // ORGANIC - original style mit mehr Variation
+                        radiusVariation = 0.5 + Math.random() * 0.8;
+                    }
+                    
                     const radius = this.radius * radiusVariation;
                     points.push({ x: Math.cos(angle) * radius, y: Math.sin(angle) * radius });
                 }
@@ -930,6 +1135,8 @@
                 ctx.save();
                 ctx.translate(this.x, this.y);
                 ctx.rotate(this.rotation);
+                
+                // Draw asteroid outline
                 ctx.strokeStyle = '#fff';
                 ctx.lineWidth = 1;
                 ctx.beginPath();
@@ -939,6 +1146,15 @@
                 });
                 ctx.closePath();
                 ctx.stroke();
+                
+                // Draw vector points at line ends (10% brighter, subtle)
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.9)'; // 10% brighter than lines
+                this.points.forEach(p => {
+                    ctx.beginPath();
+                    ctx.arc(p.x, p.y, 1.2, 0, Math.PI * 2); // Small dots at vertices
+                    ctx.fill();
+                });
+                
                 ctx.restore();
             }
 
@@ -1136,6 +1352,88 @@
             }
         }
 
+        // NEW: Authentic ship explosion - breaks into 3 line segments!
+        function createShipExplosion(ship) {
+            playExplosionSound();
+            
+            // Ship consists of 3 line segments that fly apart slowly
+            const segments = [
+                // Segment 1: Nose → Top-left
+                {
+                    points: [
+                        {x: 15, y: 0},
+                        {x: -10, y: -10}
+                    ],
+                    velocity: {
+                        x: Math.cos(ship.angle - 0.5) * 1.2,
+                        y: Math.sin(ship.angle - 0.5) * 1.2
+                    },
+                    rotation: (Math.random() - 0.5) * 0.06
+                },
+                // Segment 2: Top-left → Bottom-left (back of ship)
+                {
+                    points: [
+                        {x: -10, y: -10},
+                        {x: -7, y: 0},
+                        {x: -10, y: 10}
+                    ],
+                    velocity: {
+                        x: Math.cos(ship.angle + Math.PI) * 0.8,
+                        y: Math.sin(ship.angle + Math.PI) * 0.8
+                    },
+                    rotation: (Math.random() - 0.5) * 0.06
+                },
+                // Segment 3: Bottom-left → Nose
+                {
+                    points: [
+                        {x: -10, y: 10},
+                        {x: 15, y: 0}
+                    ],
+                    velocity: {
+                        x: Math.cos(ship.angle + 0.5) * 1.2,
+                        y: Math.sin(ship.angle + 0.5) * 1.2
+                    },
+                    rotation: (Math.random() - 0.5) * 0.06
+                }
+            ];
+            
+            segments.forEach(segment => {
+                gameState.shipExplosionSegments.push({
+                    x: ship.x,
+                    y: ship.y,
+                    angle: ship.angle,
+                    points: segment.points,
+                    velocity: segment.velocity,
+                    rotation: segment.rotation,
+                    life: 30,
+                    update() {
+                        this.x += this.velocity.x;
+                        this.y += this.velocity.y;
+                        this.angle += this.rotation;
+                        this.life--;
+                    },
+                    draw() {
+                        ctx.save();
+                        ctx.translate(this.x, this.y);
+                        ctx.rotate(this.angle);
+                        
+                        const opacity = this.life / 30;
+                        ctx.strokeStyle = `rgba(255, 255, 255, ${opacity})`;
+                        ctx.lineWidth = 1;
+                        
+                        ctx.beginPath();
+                        this.points.forEach((p, i) => {
+                            if (i === 0) ctx.moveTo(p.x, p.y);
+                            else ctx.lineTo(p.x, p.y);
+                        });
+                        ctx.stroke();
+                        
+                        ctx.restore();
+                    }
+                });
+            });
+        }
+
         function hyperspace() {
             if (gameState.hyperspaceCooldown > 0) return; // Noch im Cooldown
             
@@ -1160,6 +1458,8 @@
                 } else {
                     gameState.gameOver = true;
                     gameOverEl.classList.add('show');
+                    stopUfoSound(); // Stop UFO sound!
+                    startStartScreenMusic(); // Start Moonlight melody!
                 }
             } else {
                 // Safe gelandet
@@ -1219,6 +1519,7 @@
 
         function initGame() {
             stopUfoSound(); // Stop any existing UFO sound
+            stopStartScreenMusic(); // Stop Moonlight melody!
             
             const resetWave = gameState.gameOver; // Bei Game Over alles zurücksetzen!
             
@@ -1228,6 +1529,7 @@
                 bullets: [],
                 ufoBullets: [],
                 particles: [],
+                shipExplosionSegments: [], // Reset explosion segments
                 ufo: null,
                 ufoSpawnTimer: 600, // 10 Sekunden bis erstes UFO
                 score: resetWave ? 0 : gameState.score, // Game Over = Score 0!
@@ -1253,29 +1555,199 @@
             updateUI();
         }
 
-        function updateUI() {
-            scoreEl.textContent = `SCORE: ${gameState.score}`;
-            highScoreEl.textContent = `HIGH: ${gameState.highScore}`;
-            waveEl.textContent = `WAVE: ${gameState.wave}`;
-            livesEl.textContent = `LIVES: ${gameState.lives}`;
+        // Draw lives as ship symbols
+        function drawLivesDisplay() {
+            livesCtx.clearRect(0, 0, livesCanvas.width, livesCanvas.height);
             
-            // Bonus Ship bei 10.000 Punkten
+            const shipSize = 15;
+            const spacing = 25;
+            
+            livesCtx.strokeStyle = '#fff';
+            livesCtx.fillStyle = '#fff';
+            livesCtx.lineWidth = 1;
+            
+            for (let i = 0; i < gameState.lives; i++) {
+                const x = 15 + (i * spacing);
+                const y = 15;
+                
+                livesCtx.save();
+                livesCtx.translate(x, y);
+                livesCtx.rotate(-Math.PI / 2); // Point up
+                
+                // Draw mini ship
+                livesCtx.beginPath();
+                livesCtx.moveTo(12, 0);
+                livesCtx.lineTo(-8, -7);
+                livesCtx.lineTo(-5, 0);
+                livesCtx.lineTo(-8, 7);
+                livesCtx.closePath();
+                livesCtx.stroke();
+                
+                // Vector points
+                const points = [{x: 12, y: 0}, {x: -8, y: -7}, {x: -8, y: 7}];
+                points.forEach(p => {
+                    livesCtx.beginPath();
+                    livesCtx.arc(p.x, p.y, 1.2, 0, Math.PI * 2);
+                    livesCtx.fill();
+                });
+                
+                livesCtx.restore();
+            }
+        }
+
+        function updateUI() {
+            // Clear and redraw score with vector font
+            const scoreStr = String(gameState.score).padStart(4, '0');
+            // We'll draw this in the game loop on the main canvas
+            
+            // Wave: 2-digit display
+            const waveStr = String(gameState.wave).padStart(2, '0');
+            // We'll draw this in the game loop on the main canvas
+            
+            // Lives: draw ships
+            drawLivesDisplay();
+            
+            // Bonus Ship at 10,000
             if (gameState.score >= 10000 && !gameState.bonusShipAwarded) {
                 gameState.lives++;
                 gameState.bonusShipAwarded = true;
-                // Indicator ausblenden
                 document.getElementById('bonusShip').style.display = 'none';
             }
             
-            // High Score speichern
+            // High Score save
             if (gameState.score > gameState.highScore) {
-                gameState.highScore = gameState.highScore;
+                gameState.highScore = gameState.score;
                 localStorage.setItem('asteroidsHighScore', gameState.highScore);
             }
         }
 
         function gameLoop() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Draw Startscreen if not started
+            if (!gameState.gameStarted) {
+                const centerX = canvas.width / 2;
+                const centerY = canvas.height / 2;
+                
+                ctx.save();
+                ctx.globalAlpha = 1.0;
+                const title = "DIESELROIDS";
+                const titleSize = 5.5;
+                const titleSpacing = 18;
+                const titleWidth = title.length * titleSpacing * titleSize;
+                VectorFont.drawText(ctx, title, centerX - titleWidth / 2, centerY - 120, titleSize, titleSpacing);
+                ctx.restore();
+                
+                ctx.save();
+                ctx.globalAlpha = 0.6;
+                const subtitle = "A TRIBUTE TO THE 1979 ARCADE CLASSIC ASTEROIDS";
+                const subSize = 1.2;
+                const subSpacing = 10;
+                const subWidth = subtitle.length * subSpacing * subSize;
+                VectorFont.drawText(ctx, subtitle, centerX - subWidth / 2, centerY - 20, subSize, subSpacing);
+                ctx.restore();
+                
+                ctx.save();
+                ctx.globalAlpha = 0.8;
+                const startText = "PRESS SPACE TO START";
+                const startSize = 2.5;
+                const startSpacing = 14;
+                const startWidth = startText.length * startSpacing * startSize;
+                VectorFont.drawText(ctx, startText, centerX - startWidth / 2, centerY + 140, startSize, startSpacing);
+                ctx.restore();
+                
+                if (window.innerWidth <= 768) {
+                    ctx.save();
+                    ctx.globalAlpha = 0.6;
+                    const mobileText = "TAP ANYWHERE TO START";
+                    const mobileSize = 2;
+                    const mobileSpacing = 12;
+                    const mobileWidth = mobileText.length * mobileSpacing * mobileSize;
+                    VectorFont.drawText(ctx, mobileText, centerX - mobileWidth / 2, centerY + 200, mobileSize, mobileSpacing);
+                    ctx.restore();
+                }
+                
+                ctx.save();
+                ctx.font = '10px monospace';
+                ctx.fillStyle = '#fff';
+                ctx.globalAlpha = 0.4;
+                ctx.textAlign = 'right';
+                ctx.fillText('© 2025 DIESEL INC.', canvas.width - 20, canvas.height - 20);
+                ctx.restore();
+                
+                requestAnimationFrame(gameLoop);
+                return;
+            }
+
+            // Draw Game Over on Canvas
+            if (gameState.gameOver) {
+                const centerX = canvas.width / 2;
+                const centerY = canvas.height / 2;
+                
+                ctx.save();
+                ctx.globalAlpha = 0.95;
+                ctx.fillStyle = '#000';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                ctx.restore();
+                
+                ctx.save();
+                ctx.globalAlpha = 1.0;
+                const title = "GAME OVER";
+                const titleSize = 5;
+                const titleSpacing = 18;
+                const titleWidth = title.length * titleSpacing * titleSize;
+                VectorFont.drawText(ctx, title, centerX - titleWidth / 2, centerY - 80, titleSize, titleSpacing);
+                ctx.restore();
+                
+                ctx.save();
+                ctx.globalAlpha = 0.8;
+                const scoreText = String(gameState.score).padStart(5, '0');
+                const scoreSize = 3;
+                const scoreSpacing = 16;
+                const scoreWidth = scoreText.length * scoreSpacing * scoreSize;
+                VectorFont.drawText(ctx, scoreText, centerX - scoreWidth / 2, centerY + 20, scoreSize, scoreSpacing);
+                ctx.restore();
+                
+                ctx.save();
+                ctx.globalAlpha = 0.7;
+                const playText = "PRESS SPACE TO PLAY AGAIN";
+                const playSize = 2;
+                const playSpacing = 12;
+                const playWidth = playText.length * playSpacing * playSize;
+                VectorFont.drawText(ctx, playText, centerX - playWidth / 2, centerY + 120, playSize, playSpacing);
+                ctx.restore();
+                
+                requestAnimationFrame(gameLoop);
+                return;
+            }
+
+            // Draw UI with vector font (only when game started)
+            if (gameState.gameStarted) {
+                const scoreStr = String(gameState.score).padStart(4, '0');
+                const waveStr = String(gameState.wave).padStart(2, '0');
+                
+                VectorFont.drawText(ctx, scoreStr, 20, 30, 2, 12);
+                VectorFont.drawText(ctx, waveStr, canvas.width / 2 - 20, 30, 2, 12);
+                
+                // Draw Lives as ships (further down)
+                for (let i = 0; i < gameState.lives; i++) {
+                    drawShipSymbol(35 + (i * 25), 80, 1.0); // Was 65, now 80
+                }
+            }
+
+            // Draw wave complete message
+            if (gameState.showingWaveComplete && gameState.waveCompleteTimer > 0) {
+                const alpha = gameState.waveCompleteTimer / 120; // Fade out
+                ctx.save();
+                ctx.globalAlpha = alpha;
+                const textWidth = gameState.waveCompleteText.length * 12 * 3; // Approximate width
+                VectorFont.drawText(ctx, gameState.waveCompleteText, canvas.width / 2 - textWidth / 2, canvas.height / 2, 3, 14);
+                ctx.restore();
+                gameState.waveCompleteTimer--;
+                if (gameState.waveCompleteTimer === 0) {
+                    gameState.showingWaveComplete = false;
+                }
+            }
 
             if (gameState.gameStarted && !gameState.gameOver) {
                 // Heartbeat Sound (schneller je weniger Asteroiden)
@@ -1308,6 +1780,13 @@
                     particle.update();
                     particle.draw();
                     return particle.life > 0;
+                });
+
+                // Ship explosion segments updaten (NEW!)
+                gameState.shipExplosionSegments = gameState.shipExplosionSegments.filter(segment => {
+                    segment.update();
+                    segment.draw();
+                    return segment.life > 0;
                 });
 
                 // Bullets updaten
@@ -1399,8 +1878,7 @@
                 if (gameState.invulnerable === 0) {
                     gameState.asteroids.forEach(asteroid => {
                         if (checkCollision(gameState.ship, asteroid, asteroid.radius + 10)) {
-                            playExplosionSound();
-                            createExplosion(gameState.ship.x, gameState.ship.y, 15);
+                            createShipExplosion(gameState.ship); // NEW: Authentic explosion!
                             gameState.lives--;
                             if (gameState.lives > 0) {
                                 gameState.ship = new Ship();
@@ -1408,6 +1886,8 @@
                             } else {
                                 gameState.gameOver = true;
                                 gameOverEl.classList.add('show');
+                                stopUfoSound(); // Stop UFO sound!
+                                startStartScreenMusic(); // Start Moonlight melody!
                             }
                         }
                     });
@@ -1415,8 +1895,7 @@
                     // UFO Bullets vs Ship
                     gameState.ufoBullets = gameState.ufoBullets.filter(bullet => {
                         if (checkCollision(gameState.ship, bullet, 10)) {
-                            playExplosionSound();
-                            createExplosion(gameState.ship.x, gameState.ship.y, 15);
+                            createShipExplosion(gameState.ship); // NEW: Authentic explosion!
                             gameState.lives--;
                             if (gameState.lives > 0) {
                                 gameState.ship = new Ship();
@@ -1424,16 +1903,51 @@
                             } else {
                                 gameState.gameOver = true;
                                 gameOverEl.classList.add('show');
+                                stopUfoSound(); // Stop UFO sound!
+                                startStartScreenMusic(); // Start Moonlight melody!
                             }
                             return false; // Bullet entfernen
                         }
                         return true;
                     });
+                    
+                    // Ship vs UFO (direct collision - both explode!)
+                    if (gameState.ufo && checkCollision(gameState.ship, gameState.ufo, gameState.ufo.size + 10)) {
+                        // Ship explodes
+                        createShipExplosion(gameState.ship);
+                        gameState.lives--;
+                        
+                        // UFO explodes too!
+                        playExplosionSound();
+                        createExplosion(gameState.ufo.x, gameState.ufo.y, 12);
+                        gameState.score += gameState.ufo.type === 'large' ? 200 : 1000;
+                        gameState.ufo = null;
+                        stopUfoSound();
+                        
+                        if (gameState.lives > 0) {
+                            gameState.ship = new Ship();
+                            gameState.invulnerable = 120;
+                        } else {
+                            gameState.gameOver = true;
+                            gameOverEl.classList.add('show');
+                            stopUfoSound();
+                            startStartScreenMusic();
+                        }
+                    }
                 }
+
+        // Show wave complete message with vector font
+        function showWaveComplete(wave) {
+            // We'll draw this directly on canvas in game loop
+            gameState.showingWaveComplete = true;
+            gameState.waveCompleteText = `WAVE ${wave}`;
+            gameState.waveCompleteTimer = 120; // 2 seconds at 60fps
+        }
 
                 // Neues WAVE wenn alle Asteroids zerstört!
                 if (gameState.asteroids.length === 0 && !gameState.ufo) {
                     gameState.wave++; // NÄCHSTE WAVE!
+                    showWaveComplete(gameState.wave); // Show wave message!
                     // Wave 1: 4, Wave 2: 6, Wave 3: 8, Wave 4+: 10
                     const asteroidCount = Math.min(4 + (gameState.wave - 1) * 2, 10);
                     spawnAsteroids(asteroidCount);
