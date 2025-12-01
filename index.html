@@ -1636,16 +1636,19 @@
                 
                 // Responsive sizing for mobile
                 const isSmallMobile = window.innerWidth <= 430; // iPhone size
-                const isMediumMobile = window.innerWidth > 430 && window.innerWidth <= 1024; // iPad size (was 768, too small!)
+                const isMediumMobile = window.innerWidth > 430 && window.innerWidth <= 1024; // iPad size
                 const isDesktop = window.innerWidth > 1024;
+                
+                // iPad Portrait needs BIGGER text (more vertical space!)
+                const isPortrait = window.innerHeight > window.innerWidth;
+                const isIpadPortrait = isMediumMobile && isPortrait && window.innerWidth <= 768;
                 
                 ctx.save();
                 ctx.globalAlpha = 1.0;
                 const title = "DIESELROIDS";
-                // Size: iPhone 2.2, iPad 2.5, Desktop 5.5
-                // The problem might be SPACING not SIZE!
-                const titleSize = isSmallMobile ? 2.2 : (isMediumMobile ? 2.5 : 5.5);
-                const titleSpacing = isSmallMobile ? 9 : (isMediumMobile ? 8 : 18); // iPad: 8 instead of 10!
+                // iPhone: 2.2, iPad Portrait: 3.5, iPad Landscape: 2.5, Desktop: 5.5
+                const titleSize = isSmallMobile ? 2.2 : (isIpadPortrait ? 3.5 : (isMediumMobile ? 2.5 : 5.5));
+                const titleSpacing = isSmallMobile ? 9 : (isIpadPortrait ? 10 : (isMediumMobile ? 8 : 18));
                 const titleWidth = title.length * titleSpacing * titleSize;
                 const titleY = isSmallMobile ? centerY - 120 : (isMediumMobile ? centerY - 110 : centerY - 120);
                 VectorFont.drawText(ctx, title, centerX - titleWidth / 2, titleY, titleSize, titleSpacing);
@@ -1654,8 +1657,9 @@
                 ctx.save();
                 ctx.globalAlpha = 0.6;
                 const subtitle = isSmallMobile ? "A TRIBUTE TO ASTEROIDS 1979" : "A TRIBUTE TO THE 1979 ARCADE CLASSIC ASTEROIDS";
-                const subSize = isSmallMobile ? 0.6 : (isMediumMobile ? 0.7 : 1.2);
-                const subSpacing = isSmallMobile ? 6 : (isMediumMobile ? 7 : 10);
+                // iPhone: 0.6, iPad Portrait: 1.0, iPad Landscape: 0.7, Desktop: 1.2
+                const subSize = isSmallMobile ? 0.6 : (isIpadPortrait ? 1.0 : (isMediumMobile ? 0.7 : 1.2));
+                const subSpacing = isSmallMobile ? 6 : (isIpadPortrait ? 9 : (isMediumMobile ? 7 : 10));
                 const subWidth = subtitle.length * subSpacing * subSize;
                 const subY = isSmallMobile ? centerY - 30 : (isMediumMobile ? centerY - 25 : centerY - 20);
                 VectorFont.drawText(ctx, subtitle, centerX - subWidth / 2, subY, subSize, subSpacing);
