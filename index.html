@@ -346,12 +346,10 @@
             <p style="font-size: 20px; margin-top: 30px; opacity: 0.8; animation: blink 1.5s infinite;" class="mobile-hint">TAP ANYWHERE TO START</p>
         </div>
         <div id="screenWarning" style="display: none;">
-            <div style="font-size: 24px; margin-bottom: 20px;">⚠️</div>
-            <div style="font-size: 18px; line-height: 1.6; margin-bottom: 30px;">
-                DIESELROIDS works best on<br>
+            <div style="font-size: 18px; line-height: 1.8;">
+                works best on<br>
                 <strong>DESKTOP & iPAD</strong>
             </div>
-            <p style="font-size: 16px; animation: blink 1.5s infinite;">TAP TO CONTINUE</p>
         </div>
         <div id="gameOver">
             GAME OVER<br>
@@ -1672,9 +1670,9 @@
                 ctx.save();
                 ctx.globalAlpha = 1.0;
                 const title = "DIESELROIDS";
-                // iPhone: 2.5, iPad: 3.0 (was 3.5!), Desktop: 5.5
-                const titleSize = isSmallMobile ? 2.5 : (isMediumMobile ? 3.0 : 5.5);
-                const titleSpacing = isSmallMobile ? 11 : (isMediumMobile ? 12 : 18);
+                // iPhone: 2.5, iPad: 2.7 (SMALLER!), Desktop: 5.5
+                const titleSize = isSmallMobile ? 2.5 : (isMediumMobile ? 2.7 : 5.5);
+                const titleSpacing = isSmallMobile ? 11 : (isMediumMobile ? 11 : 18);
                 const titleWidth = title.length * titleSpacing * titleSize;
                 const titleY = isSmallMobile ? centerY - 100 : (isMediumMobile ? centerY - 100 : centerY - 120);
                 VectorFont.drawText(ctx, title, centerX - titleWidth / 2, titleY, titleSize, titleSpacing);
