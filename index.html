@@ -1636,8 +1636,8 @@
                 
                 // Responsive sizing for mobile
                 const isSmallMobile = window.innerWidth <= 430; // iPhone size
-                const isMediumMobile = window.innerWidth > 430 && window.innerWidth <= 768; // iPad size
-                const isDesktop = window.innerWidth > 768;
+                const isMediumMobile = window.innerWidth > 430 && window.innerWidth <= 1024; // iPad size (was 768, too small!)
+                const isDesktop = window.innerWidth > 1024;
                 
                 ctx.save();
                 ctx.globalAlpha = 1.0;
