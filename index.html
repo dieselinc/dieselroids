@@ -46,6 +46,8 @@
             left: 20px;
             right: 20px;
             display: none !important; /* HIDDEN - Canvas Vector Font used! */
+            visibility: hidden !important; /* Safari force hide! */
+            opacity: 0 !important; /* Triple force! */
             justify-content: space-between;
             font-size: 20px;
             text-shadow: 0 0 10px #fff;
@@ -54,10 +56,14 @@
         
         #livesCanvas {
             display: none !important; /* HIDDEN - Canvas Vector Font used! */
+            visibility: hidden !important;
+            opacity: 0 !important;
         }
         
         #bonusShip {
             display: none !important; /* HIDDEN - Canvas Vector Font used! */
+            visibility: hidden !important;
+            opacity: 0 !important;
         }
 
         #gameOver {
@@ -164,7 +170,7 @@
         /* MOBILE CONTROLS */
         #mobileControls {
             position: absolute;
-            bottom: 20px;
+            bottom: 80px; /* Higher! Was 20px */
             left: 0;
             right: 0;
             display: none;
@@ -1635,47 +1641,43 @@
                 const centerY = canvas.height / 2;
                 
                 // Responsive sizing for mobile
-                const isMobile = window.innerWidth <= 768;
                 const isSmallMobile = window.innerWidth <= 430; // iPhone size
+                const isMediumMobile = window.innerWidth > 430 && window.innerWidth <= 768; // iPad size
+                const isDesktop = window.innerWidth > 768;
                 
                 ctx.save();
                 ctx.globalAlpha = 1.0;
                 const title = "DIESELROIDS";
-                const titleSize = isSmallMobile ? 3 : (isMobile ? 4 : 5.5);
-                const titleSpacing = isSmallMobile ? 12 : (isMobile ? 14 : 18);
+                // iPhone: 2.5, iPad: 3.5, Desktop: 5.5
+                const titleSize = isSmallMobile ? 2.5 : (isMediumMobile ? 3.5 : 5.5);
+                const titleSpacing = isSmallMobile ? 11 : (isMediumMobile ? 13 : 18);
                 const titleWidth = title.length * titleSpacing * titleSize;
-                VectorFont.drawText(ctx, title, centerX - titleWidth / 2, centerY - (isSmallMobile ? 80 : 120), titleSize, titleSpacing);
+                const titleY = isSmallMobile ? centerY - 100 : (isMediumMobile ? centerY - 100 : centerY - 120);
+                VectorFont.drawText(ctx, title, centerX - titleWidth / 2, titleY, titleSize, titleSpacing);
                 ctx.restore();
                 
                 ctx.save();
                 ctx.globalAlpha = 0.6;
                 const subtitle = isSmallMobile ? "A TRIBUTE TO ASTEROIDS 1979" : "A TRIBUTE TO THE 1979 ARCADE CLASSIC ASTEROIDS";
-                const subSize = isSmallMobile ? 0.8 : (isMobile ? 1 : 1.2);
-                const subSpacing = isSmallMobile ? 8 : 10;
+                const subSize = isSmallMobile ? 0.7 : (isMediumMobile ? 0.9 : 1.2);
+                const subSpacing = isSmallMobile ? 7 : (isMediumMobile ? 9 : 10);
                 const subWidth = subtitle.length * subSpacing * subSize;
-                VectorFont.drawText(ctx, subtitle, centerX - subWidth / 2, centerY - (isSmallMobile ? 10 : 20), subSize, subSpacing);
+                const subY = isSmallMobile ? centerY - 20 : (isMediumMobile ? centerY - 15 : centerY - 20);
+                VectorFont.drawText(ctx, subtitle, centerX - subWidth / 2, subY, subSize, subSpacing);
                 ctx.restore();
                 
                 ctx.save();
                 ctx.globalAlpha = 0.8;
                 const startText = isSmallMobile ? "TAP TO START" : "PRESS SPACE TO START";
-                const startSize = isSmallMobile ? 1.5 : (isMobile ? 2 : 2.5);
-                const startSpacing = isSmallMobile ? 10 : (isMobile ? 12 : 14);
+                const startSize = isSmallMobile ? 1.3 : (isMediumMobile ? 1.8 : 2.5);
+                const startSpacing = isSmallMobile ? 9 : (isMediumMobile ? 11 : 14);
                 const startWidth = startText.length * startSpacing * startSize;
-                VectorFont.drawText(ctx, startText, centerX - startWidth / 2, centerY + (isSmallMobile ? 80 : 140), startSize, startSpacing);
+                const startY = isSmallMobile ? centerY + 100 : (isMediumMobile ? centerY + 120 : centerY + 140);
+                VectorFont.drawText(ctx, startText, centerX - startWidth / 2, startY, startSize, startSpacing);
                 ctx.restore();
                 
-                // Mobile hint only on larger screens (not tiny phones)
-                if (isMobile && !isSmallMobile) {
-                    ctx.save();
-                    ctx.globalAlpha = 0.6;
-                    const mobileText = "TAP ANYWHERE TO START";
-                    const mobileSize = 2;
-                    const mobileSpacing = 12;
-                    const mobileWidth = mobileText.length * mobileSpacing * mobileSize;
-                    VectorFont.drawText(ctx, mobileText, centerX - mobileWidth / 2, centerY + 200, mobileSize, mobileSpacing);
-                    ctx.restore();
-                }
+                // NO "TAP ANYWHERE" hint anymore - too cluttered!
+                // Just "TAP TO START" or "PRESS SPACE TO START" is enough!
                 
                 ctx.save();
                 ctx.font = isSmallMobile ? '8px monospace' : '10px monospace';
@@ -1998,9 +2000,8 @@
                 musicStartAttempted = true;
                 console.log('▶️ Attempting to start music...');
                 
-                // Remove listeners immediately to prevent re-triggering
-                window.removeEventListener('click', clickHandler);
-                window.removeEventListener('keydown', keyHandler);
+                // DON'T remove listeners - Safari needs them!
+                // They'll be handled by the if-statements above
                 
                 // Resume audio context (required by browsers)
                 if (audioCtx.state === 'suspended') {
