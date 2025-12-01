@@ -1,9 +1,14 @@
+```html
 <!DOCTYPE html>
 <html lang="de">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>DIESELROIDS (1979)</title>
+    <meta property="og:title" content="DIESELROIDS: A Tribute to the 1979 Arcade Classic" />
+    <meta property="og:description" content="No microtransactions. No ads. Just pure, unfiltered vector arcade action." />
+    <meta property="og:image" content="https://dieselinc.github.io/dieselroids/preview.png" />
+    <meta property="og:url" content="https://dieselinc.github.io/dieselroids/" />
     <style>
         * {
             margin: 0;
@@ -192,12 +197,6 @@
             padding: 5px;
         }
 
-        .btn-label {
-            font-size: 11px;
-            margin-top: 2px;
-            opacity: 0.8;
-        }
-
         .control-btn:active {
             background: rgba(255, 255, 255, 0.3);
             transform: scale(0.95);
@@ -332,7 +331,6 @@
             © 2025 DIESEL INC.
         </div>
         
-        <!-- MOBILE CONTROLS (nur auf Touch-Geräten sichtbar) -->
         <div id="mobileControls">
             <div class="control-group-left">
                 <button id="btnFire" class="control-btn fire">●<br><span class="btn-label">FIRE</span></button>
@@ -389,14 +387,14 @@
             // Extended Cis-Moll Melodie mit MEHR Takten und Variation!
             const melody = [
                 // Phrase 1 (Takt 1-4)
-                277.18, 329.63, 415.30, 493.88,  
-                277.18, 329.63, 415.30, 493.88,  
-                293.66, 329.63, 440.00, 493.88,  
-                293.66, 329.63, 440.00, 493.88,  
+                277.18, 329.63, 415.30, 493.88,
+                277.18, 329.63, 415.30, 493.88,
+                293.66, 329.63, 440.00, 493.88,
+                293.66, 329.63, 440.00, 493.88,
                 // Phrase 2 (Takt 5-8) - mit Variation!
-                277.18, 329.63, 415.30, 493.88,  
+                277.18, 329.63, 415.30, 493.88,
                 261.63, 311.13, 392.00, 466.16,  // Abstieg!
-                277.18, 329.63, 415.30, 493.88,  
+                277.18, 329.63, 415.30, 493.88,
                 293.66, 349.23, 440.00, 523.25,  // Aufstieg!
                 // Phrase 3 (Takt 9-12) - Neue Wendung!
                 311.13, 369.99, 466.16, 554.37,  // Höher!
@@ -1064,7 +1062,7 @@
             }
 
             shoot() {
-                const angle = this.type === 'large' 
+                const angle = this.type === 'large'
                     ? Math.random() * Math.PI * 2 // Zufällig
                     : Math.atan2(gameState.ship.y - this.y, gameState.ship.x - this.x); // Zielt auf Spieler
                 
@@ -1272,7 +1270,7 @@
             
             // High Score speichern
             if (gameState.score > gameState.highScore) {
-                gameState.highScore = gameState.score;
+                gameState.highScore = gameState.highScore;
                 localStorage.setItem('asteroidsHighScore', gameState.highScore);
             }
         }
