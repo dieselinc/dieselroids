@@ -1747,14 +1747,27 @@
             // Draw UI with vector font (only when game started)
             if (gameState.gameStarted) {
                 const scoreStr = String(gameState.score).padStart(4, '0');
+                const highScoreStr = String(gameState.highScore).padStart(4, '0');
                 const waveStr = String(gameState.wave).padStart(2, '0');
                 
-                VectorFont.drawText(ctx, scoreStr, 20, 30, 2, 12);
-                VectorFont.drawText(ctx, waveStr, canvas.width / 2 - 20, 30, 2, 12);
+                // Left: Current Score (moved more to center, was 20)
+                const scoreWidth = scoreStr.length * 12 * 2;
+                const scoreX = canvas.width / 4 - scoreWidth / 2;
+                VectorFont.drawText(ctx, scoreStr, scoreX, 30, 2, 12);
                 
-                // Draw Lives as ships (further down)
+                // Center: Highscore (size 1.5, smaller)
+                const highScoreWidth = highScoreStr.length * 10 * 1.5;
+                VectorFont.drawText(ctx, highScoreStr, canvas.width / 2 - highScoreWidth / 2, 30, 1.5, 10);
+                
+                // Right: Wave (moved more to center, was far right)
+                const waveWidth = waveStr.length * 12 * 2;
+                VectorFont.drawText(ctx, waveStr, (canvas.width * 3 / 4) - waveWidth / 2, 30, 2, 12);
+                
+                // Draw Lives as ships CENTERED under score
+                const totalShipsWidth = gameState.lives * 25 - 5; // 25px spacing, minus last gap
+                const shipsStartX = scoreX + (scoreWidth / 2) - (totalShipsWidth / 2);
                 for (let i = 0; i < gameState.lives; i++) {
-                    drawShipSymbol(35 + (i * 25), 80, 1.0); // Was 65, now 80
+                    drawShipSymbol(shipsStartX + (i * 25), 80, 1.0);
                 }
             }
 
