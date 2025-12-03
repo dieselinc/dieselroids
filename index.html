@@ -373,6 +373,26 @@
             © 2025 DIESEL INC.
         </div>
         
+        <!-- Hidden input for mobile keyboard -->
+        <input 
+            type="text" 
+            id="mobileKeyboardInput" 
+            maxlength="3"
+            autocomplete="off"
+            autocorrect="off"
+            autocapitalize="characters"
+            style="position: fixed; top: -1000px; left: 0; 
+                   width: 1px; height: 1px; opacity: 0; 
+                   border: none; background: transparent;"
+        />
+        
+        <!-- Invisible tap overlay for keyboard activation -->
+        <div 
+            id="keyboardTriggerOverlay"
+            style="position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+                   z-index: -1; opacity: 0; pointer-events: none;"
+        ></div>
+        
         <div id="mobileControls">
             <div class="control-group-left">
                 <button id="btnFire" class="control-btn fire">F</button>
@@ -871,21 +891,140 @@
             hyperspaceCooldown: 0,
             showingWaveComplete: false,
             waveCompleteText: '',
-            waveCompleteTimer: 0
+            waveCompleteTimer: 0,
+            showingTryAgain: false,
+            pulseCounter: 0
         };
+
+        // ===========================================
+        // HIGHSCORE SYSTEM
+        // ===========================================
+        
+        // Load top 5 highscores from localStorage
+        function loadHighScores() {
+            const saved = localStorage.getItem('asteroidsTop5');
+            if (saved) {
+                return JSON.parse(saved);
+            }
+            // Default empty list
+            return [
+                { name: '', score: 0 },
+                { name: '', score: 0 },
+                { name: '', score: 0 },
+                { name: '', score: 0 },
+                { name: '', score: 0 }
+            ];
+        }
+
+        // Save top 5 highscores to localStorage
+        function saveHighScores(scores) {
+            localStorage.setItem('asteroidsTop5', JSON.stringify(scores));
+        }
+
+        // Check if score qualifies for top 5
+        function checkHighScore(score) {
+            const scores = loadHighScores();
+            // Find position (1-5) or return 0 if doesn't qualify
+            for (let i = 0; i < scores.length; i++) {
+                if (score > scores[i].score) {
+                    return i + 1; // Return rank (1-based)
+                }
+            }
+            return 0; // Doesn't qualify
+        }
+
+        // Insert score into top 5
+        function insertHighScore(rank, name, score) {
+            const scores = loadHighScores();
+            // Insert at position (rank is 1-based)
+            scores.splice(rank - 1, 0, { name: name.toUpperCase(), score: score });
+            // Keep only top 5
+            scores.length = 5;
+            saveHighScores(scores);
+        }
+
+        // Highscore input state
+        let highScoreState = {
+            entering: false,
+            rank: 0,
+            name: '',
+            cursorBlink: 0
+        };
+
+        // Handle game over - check for highscore
+        function handleGameOver() {
+            gameState.gameOver = true;
+            gameOverEl.classList.add('show');
+            stopUfoSound();
+            startStartScreenMusic();
+            
+            const isSmallMobile = window.innerWidth <= 430; // iPhone only!
+            
+            // Check if score qualifies for top 5 - DESKTOP & IPAD!
+            if (!isSmallMobile) {
+                const rank = checkHighScore(gameState.score);
+                if (rank > 0) {
+                    highScoreState.entering = true;
+                    highScoreState.rank = rank;
+                    highScoreState.name = '';
+                    highScoreState.cursorBlink = 0;
+                }
+                // Desktop & iPad: NO auto-transition! Player presses SPACE/TAP to continue
+                return;
+            }
+            
+            // iPhone only: Show TRY AGAIN screen after 2 seconds
+            setTimeout(() => {
+                gameState.showingTryAgain = true;
+                gameState.gameOver = false;
+            }, 2000);
+        }
 
         const keys = {};
 
         // Event-Listener
         document.addEventListener('keydown', (e) => {
+            // Handle highscore name input
+            if (highScoreState.entering) {
+                e.preventDefault();
+                
+                if (e.key === 'Enter' && highScoreState.name.length === 3) {
+                    // Submit name
+                    insertHighScore(highScoreState.rank, highScoreState.name, gameState.score);
+                    highScoreState.entering = false;
+                    highScoreState.name = '';
+                    // Show TRY AGAIN? screen
+                    gameState.showingTryAgain = true;
+                    gameState.gameOver = false; // Clear game over state!
+                    return;
+                }
+                
+                if (e.key === 'Backspace' && highScoreState.name.length > 0) {
+                    // Delete last character
+                    highScoreState.name = highScoreState.name.slice(0, -1);
+                    return;
+                }
+                
+                // Accept A-Z letters (max 3 characters)
+                if (highScoreState.name.length < 3 && e.key.length === 1 && /[a-zA-Z]/.test(e.key)) {
+                    highScoreState.name += e.key.toUpperCase();
+                }
+                return; // CRITICAL: Return here to block ALL other key handling
+            }
+            
+            // Normal game controls (only if NOT entering name)
             keys[e.key] = true;
             if (e.key === ' ') {
                 e.preventDefault();
                 if (!gameState.gameStarted) {
                     startGame();
-                } else if (gameState.gameOver) {
+                } else if (gameState.showingTryAgain) {
+                    // From TRY AGAIN screen -> restart game
+                    gameState.showingTryAgain = false;
                     initGame();
-                } else {
+                } else if (gameState.gameOver && !highScoreState.entering) {
+                    initGame();
+                } else if (gameState.gameStarted && !gameState.gameOver) {
                     shoot();
                 }
             }
@@ -919,6 +1058,32 @@
         
         if (isTouchDevice) {
             mobileControls.classList.add('active');
+            
+            // Mobile keyboard input handler
+            const mobileInput = document.getElementById('mobileKeyboardInput');
+            
+            mobileInput.addEventListener('input', (e) => {
+                if (!highScoreState.entering) return;
+                
+                const value = e.target.value.toUpperCase().replace(/[^A-Z]/g, '');
+                highScoreState.name = value.substring(0, 3);
+                e.target.value = highScoreState.name;
+            });
+            
+            mobileInput.addEventListener('keydown', (e) => {
+                if (!highScoreState.entering) return;
+                
+                if (e.key === 'Enter' && highScoreState.name.length === 3) {
+                    e.preventDefault();
+                    insertHighScore(highScoreState.rank, highScoreState.name, gameState.score);
+                    highScoreState.entering = false;
+                    highScoreState.name = '';
+                    gameState.showingTryAgain = true;
+                    gameState.gameOver = false;
+                    mobileInput.blur(); // Hide keyboard
+                }
+            });
+
 
             // LEFT button
             btnLeft.addEventListener('touchstart', (e) => {
@@ -953,6 +1118,12 @@
             // FIRE button
             btnFire.addEventListener('touchstart', (e) => {
                 e.preventDefault();
+                
+                // BLOCK if entering highscore name!
+                if (highScoreState.entering) {
+                    return;
+                }
+                
                 if (!gameState.gameStarted) {
                     // Start game on first tap of FIRE button!
                     if (!musicStartAttempted && !startMusicInterval) {
@@ -968,6 +1139,10 @@
                     }
                     // Then start game
                     startGame();
+                } else if (gameState.showingTryAgain) {
+                    // From TRY AGAIN screen -> restart
+                    gameState.showingTryAgain = false;
+                    initGame();
                 } else if (gameState.gameOver) {
                     // Restart on game over
                     initGame();
@@ -1472,10 +1647,7 @@
                     gameState.ship = new Ship();
                     gameState.invulnerable = 120;
                 } else {
-                    gameState.gameOver = true;
-                    gameOverEl.classList.add('show');
-                    stopUfoSound(); // Stop UFO sound!
-                    startStartScreenMusic(); // Start Moonlight melody!
+                    handleGameOver();
                 }
             } else {
                 // Safe gelandet
@@ -1537,8 +1709,6 @@
             stopUfoSound(); // Stop any existing UFO sound
             stopStartScreenMusic(); // Stop Moonlight melody!
             
-            const resetWave = gameState.gameOver; // Bei Game Over alles zurücksetzen!
-            
             gameState = {
                 ship: new Ship(),
                 asteroids: [],
@@ -1548,10 +1718,10 @@
                 shipExplosionSegments: [], // Reset explosion segments
                 ufo: null,
                 ufoSpawnTimer: 600, // 10 Sekunden bis erstes UFO
-                score: resetWave ? 0 : gameState.score, // Game Over = Score 0!
+                score: 0, // ALWAYS reset to 0!
                 highScore: gameState.highScore,
                 lives: 3,
-                wave: resetWave ? 1 : gameState.wave, // Game Over = Wave 1
+                wave: 1, // ALWAYS start at wave 1!
                 gameOver: false,
                 gameStarted: true,
                 invulnerable: 120, // 2 Sekunden bei 60 FPS
@@ -1559,7 +1729,9 @@
                 heartbeatInterval: 60,
                 ufoSoundOscillator: null,
                 bonusShipAwarded: false,
-                hyperspaceCooldown: 0
+                hyperspaceCooldown: 0,
+                showingTryAgain: false,
+                pulseCounter: gameState.pulseCounter || 0 // Keep pulse smooth
             };
             
             // PROGRESSIVE ASTEROID COUNT!
@@ -1657,32 +1829,36 @@
                 ctx.save();
                 ctx.globalAlpha = 1.0;
                 const title = "DIESELROIDS";
-                // iPhone: 2.2, iPad Portrait: 3.5, iPad Landscape: 2.5, Desktop: 5.5
-                const titleSize = isSmallMobile ? 2.2 : (isIpadPortrait ? 3.5 : (isMediumMobile ? 2.5 : 5.5));
-                const titleSpacing = isSmallMobile ? 9 : (isIpadPortrait ? 10 : (isMediumMobile ? 8 : 18));
+                // iPhone: 2.2, iPad Portrait: 4.5, iPad Landscape: 4.0, Desktop: 5.5
+                const titleSize = isSmallMobile ? 2.2 : (isIpadPortrait ? 4.5 : (isMediumMobile ? 4.0 : 5.5));
+                const titleSpacing = isSmallMobile ? 9 : (isIpadPortrait ? 14 : (isMediumMobile ? 12 : 18));
                 const titleWidth = title.length * titleSpacing * titleSize;
-                const titleY = isSmallMobile ? centerY - 120 : (isMediumMobile ? centerY - 110 : centerY - 120);
+                const titleY = centerY - 120; // Same for all (more centered!)
                 VectorFont.drawText(ctx, title, centerX - titleWidth / 2, titleY, titleSize, titleSpacing);
                 ctx.restore();
                 
                 ctx.save();
                 ctx.globalAlpha = 0.6;
                 const subtitle = isSmallMobile ? "A TRIBUTE TO ASTEROIDS 1979" : "A TRIBUTE TO THE 1979 ARCADE CLASSIC ASTEROIDS";
-                // iPhone: 0.6, iPad Portrait: 1.0, iPad Landscape: 0.7, Desktop: 1.2
-                const subSize = isSmallMobile ? 0.6 : (isIpadPortrait ? 1.0 : (isMediumMobile ? 0.7 : 1.2));
-                const subSpacing = isSmallMobile ? 6 : (isIpadPortrait ? 9 : (isMediumMobile ? 7 : 10));
+                // iPhone: 0.6, iPad Portrait: 1.1, iPad Landscape: 1.0, Desktop: 1.2
+                const subSize = isSmallMobile ? 0.6 : (isIpadPortrait ? 1.1 : (isMediumMobile ? 1.0 : 1.2));
+                const subSpacing = isSmallMobile ? 6 : (isIpadPortrait ? 10 : (isMediumMobile ? 9 : 10));
                 const subWidth = subtitle.length * subSpacing * subSize;
-                const subY = isSmallMobile ? centerY - 30 : (isMediumMobile ? centerY - 25 : centerY - 20);
+                const subY = centerY - 20; // Same for all (more centered!)
                 VectorFont.drawText(ctx, subtitle, centerX - subWidth / 2, subY, subSize, subSpacing);
                 ctx.restore();
                 
+                // PRESS SPACE TO START - PULSING! (smoother: 0.5 to 1.0)
+                gameState.pulseCounter++;
+                const pulseOpacity = 0.5 + (Math.sin(gameState.pulseCounter * 0.05) * 0.25) + 0.25;
+                
                 ctx.save();
-                ctx.globalAlpha = 0.8;
+                ctx.globalAlpha = pulseOpacity;
                 const startText = isSmallMobile ? "TAP TO START" : "PRESS SPACE TO START";
-                const startSize = isSmallMobile ? 1.3 : (isMediumMobile ? 1.8 : 2.5);
-                const startSpacing = isSmallMobile ? 9 : (isMediumMobile ? 11 : 14);
+                const startSize = isSmallMobile ? 1.3 : (isMediumMobile ? 2.2 : 2.5);
+                const startSpacing = isSmallMobile ? 9 : (isMediumMobile ? 13 : 14);
                 const startWidth = startText.length * startSpacing * startSize;
-                const startY = isSmallMobile ? centerY + 100 : (isMediumMobile ? centerY + 120 : centerY + 140);
+                const startY = centerY + 140; // Same for all (more space!)
                 VectorFont.drawText(ctx, startText, centerX - startWidth / 2, startY, startSize, startSpacing);
                 ctx.restore();
                 
@@ -1713,42 +1889,197 @@
                 return;
             }
 
-            // Draw Game Over on Canvas
-            if (gameState.gameOver) {
+            // Draw TRY AGAIN? screen (after name entry)
+            if (gameState.showingTryAgain) {
                 const centerX = canvas.width / 2;
                 const centerY = canvas.height / 2;
                 
+                // Responsive breakpoints
+                const isSmallMobile = window.innerWidth <= 430;
+                const isMediumMobile = window.innerWidth > 430 && window.innerWidth <= 1024;
+                const scaleFactor = isSmallMobile ? 0.5 : (isMediumMobile ? 0.7 : 1.0);
+                
+                // Clear background
                 ctx.save();
                 ctx.globalAlpha = 0.95;
                 ctx.fillStyle = '#000';
                 ctx.fillRect(0, 0, canvas.width, canvas.height);
                 ctx.restore();
                 
+                // TRY AGAIN? - Position + Size of GAME OVER
+                ctx.save();
+                ctx.globalAlpha = 1.0;
+                const tryText = "TRY AGAIN?";
+                const trySize = 5 * scaleFactor;
+                const trySpacing = 18 * scaleFactor;
+                const tryWidth = tryText.length * trySpacing * trySize;
+                VectorFont.drawText(ctx, tryText, centerX - tryWidth / 2, centerY - 100 * scaleFactor, trySize, trySpacing);
+                ctx.restore();
+                
+                // PRESS SPACE TO PLAY AGAIN - PULSING! (smoother: 0.5 to 1.0)
+                gameState.pulseCounter++;
+                const pulseOpacity = 0.5 + (Math.sin(gameState.pulseCounter * 0.05) * 0.25) + 0.25;
+                
+                ctx.save();
+                ctx.globalAlpha = pulseOpacity;
+                const playText = isSmallMobile ? "TAP TO PLAY AGAIN" : "PRESS SPACE TO PLAY AGAIN";
+                const playSize = 3 * scaleFactor;
+                const playSpacing = 16 * scaleFactor;
+                const playWidth = playText.length * playSpacing * playSize;
+                VectorFont.drawText(ctx, playText, centerX - playWidth / 2, centerY - 10 * scaleFactor, playSize, playSpacing);
+                ctx.restore();
+                
+                requestAnimationFrame(gameLoop);
+                return;
+            }
+
+            // Draw Game Over on Canvas
+            if (gameState.gameOver) {
+                const centerX = canvas.width / 2;
+                const centerY = canvas.height / 2;
+                
+                // Responsive breakpoints
+                const isSmallMobile = window.innerWidth <= 430;
+                const isMediumMobile = window.innerWidth > 430 && window.innerWidth <= 1024;
+                const isDesktop = window.innerWidth > 1024;
+                
+                // Clear background
+                ctx.save();
+                ctx.globalAlpha = 0.95;
+                ctx.fillStyle = '#000';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                ctx.restore();
+                
+                // Responsive sizing factors
+                const scaleFactor = isSmallMobile ? 0.5 : (isMediumMobile ? 0.7 : 1.0);
+                
+                // Detect if keyboard is open (viewport height is reduced)
+                const isKeyboardOpen = highScoreState.entering && window.innerHeight < 500;
+                
+                // iPhone: Move start position UP
+                // If keyboard is open, move MUCH higher so table is visible
+                let yStart = 0;
+                if (isSmallMobile) {
+                    yStart = isKeyboardOpen ? -280 : -150; // Extra high when keyboard open!
+                } else if (isMediumMobile) {
+                    yStart = isKeyboardOpen ? -200 : 0; // iPad also needs adjustment
+                }
+                
+                // GAME OVER
                 ctx.save();
                 ctx.globalAlpha = 1.0;
                 const title = "GAME OVER";
-                const titleSize = 5;
-                const titleSpacing = 18;
+                const titleSize = 5 * scaleFactor;
+                const titleSpacing = 18 * scaleFactor;
                 const titleWidth = title.length * titleSpacing * titleSize;
-                VectorFont.drawText(ctx, title, centerX - titleWidth / 2, centerY - 80, titleSize, titleSpacing);
+                VectorFont.drawText(ctx, title, centerX - titleWidth / 2, centerY + yStart - 100 * scaleFactor, titleSize, titleSpacing);
                 ctx.restore();
                 
+                // SCORE
                 ctx.save();
                 ctx.globalAlpha = 0.8;
                 const scoreText = String(gameState.score).padStart(5, '0');
-                const scoreSize = 3;
-                const scoreSpacing = 16;
+                const scoreSize = 3 * scaleFactor;
+                const scoreSpacing = 16 * scaleFactor;
                 const scoreWidth = scoreText.length * scoreSpacing * scoreSize;
-                VectorFont.drawText(ctx, scoreText, centerX - scoreWidth / 2, centerY + 20, scoreSize, scoreSpacing);
+                VectorFont.drawText(ctx, scoreText, centerX - scoreWidth / 2, centerY + yStart - 10 * scaleFactor, scoreSize, scoreSpacing);
                 ctx.restore();
                 
+                // HIGH SCORES TABLE - DESKTOP ONLY!
+                if (!isTouchDevice) {
+                    // HIGH SCORES TITLE
+                    ctx.save();
+                    ctx.globalAlpha = 0.7;
+                    const highScoresTitle = "HIGH SCORES";
+                    const highScoresTitleSize = 2.5 * scaleFactor;
+                    const highScoresTitleSpacing = 16 * scaleFactor;
+                    const highScoresTitleWidth = highScoresTitle.length * highScoresTitleSpacing * highScoresTitleSize;
+                    VectorFont.drawText(ctx, highScoresTitle, centerX - highScoresTitleWidth / 2, centerY + yStart + 230 * scaleFactor, highScoresTitleSize, highScoresTitleSpacing);
+                    ctx.restore();
+
+                    // HIGH SCORES TABLE
+                    let highScores = loadHighScores();
+                
+                // If entering name, insert current score temporarily for display
+                if (highScoreState.entering) {
+                    highScores = [...highScores];
+                    highScores.splice(highScoreState.rank - 1, 0, { 
+                        name: '', 
+                        score: gameState.score 
+                    });
+                    highScores.length = 5; // Keep only top 5
+                }
+                
+                const listStartY = centerY + yStart + 300 * scaleFactor;
+                const lineHeight = 40 * scaleFactor;
+                const listSize = 1.8 * scaleFactor;
+                const listSpacing = 12 * scaleFactor;
+                
+                // Update cursor blink
+                highScoreState.cursorBlink++;
+
+                for (let i = 0; i < highScores.length; i++) {
+                    const entry = highScores[i];
+                    const y = listStartY + (i * lineHeight);
+                    const isCurrentRank = highScoreState.entering && (i + 1) === highScoreState.rank;
+
+                    ctx.save();
+                    ctx.globalAlpha = 0.7;
+
+                    // Calculate widths of each element
+                    const rankText = `${i + 1}`;
+                    const rankWidth = rankText.length * listSpacing * listSize;
+                    
+                    const displayName = isCurrentRank ? highScoreState.name.padEnd(3, '_') : (entry.name || '');
+                    // ALWAYS reserve space for 3 letters, even if empty!
+                    const nameWidth = 3 * listSpacing * listSize;
+                    
+                    const dotsWidth = 6 * listSpacing * listSize; // "......"
+                    
+                    const scoreStr = String(entry.score).padStart(5, '0');
+                    const scoreWidth = 5 * listSpacing * listSize;
+                    
+                    // Calculate TOTAL width with gaps
+                    const gap = 15 * listSize; // Space between elements
+                    const totalWidth = rankWidth + gap + nameWidth + gap + dotsWidth + gap + scoreWidth;
+                    
+                    // Start position to center the entire row
+                    let currentX = centerX - (totalWidth / 2);
+
+                    // Draw Rank
+                    VectorFont.drawText(ctx, rankText, currentX, y, listSize, listSpacing);
+                    currentX += rankWidth + gap;
+
+                    // Draw Name (only if exists)
+                    if (displayName) {
+                        VectorFont.drawText(ctx, displayName, currentX, y, listSize, listSpacing);
+                    }
+                    currentX += nameWidth + gap; // Always advance by nameWidth!
+
+                    // Draw Dots
+                    VectorFont.drawText(ctx, '......', currentX, y, listSize, listSpacing);
+                    currentX += dotsWidth + gap;
+
+                    // Draw Score
+                    VectorFont.drawText(ctx, scoreStr, currentX, y, listSize, listSpacing);
+
+                    ctx.restore();
+                }
+                } // End desktop-only highscore table
+
+                // FOOTER
                 ctx.save();
                 ctx.globalAlpha = 0.7;
-                const playText = "PRESS SPACE TO PLAY AGAIN";
-                const playSize = 2;
-                const playSpacing = 12;
-                const playWidth = playText.length * playSpacing * playSize;
-                VectorFont.drawText(ctx, playText, centerX - playWidth / 2, centerY + 120, playSize, playSpacing);
+                let footerText;
+                if (highScoreState.entering) {
+                    footerText = highScoreState.name.length === 3 ? "PRESS ENTER TO SAVE" : "TYPE YOUR NAME";
+                } else {
+                    footerText = isSmallMobile ? "TAP TO PLAY AGAIN" : (isTouchDevice ? "TAP TO PLAY AGAIN" : "PRESS SPACE TO PLAY AGAIN");
+                }
+                const playSize = 2 * scaleFactor;
+                const playSpacing = 14 * scaleFactor;
+                const playWidth = footerText.length * playSpacing * playSize;
+                VectorFont.drawText(ctx, footerText, centerX - playWidth / 2, centerY + yStart + 690 * scaleFactor, playSize, playSpacing);
                 ctx.restore();
                 
                 requestAnimationFrame(gameLoop);
@@ -1925,16 +2256,13 @@
                 if (gameState.invulnerable === 0) {
                     gameState.asteroids.forEach(asteroid => {
                         if (checkCollision(gameState.ship, asteroid, asteroid.radius + 10)) {
-                            createShipExplosion(gameState.ship); // NEW: Authentic explosion!
+                            createShipExplosion(gameState.ship);
                             gameState.lives--;
                             if (gameState.lives > 0) {
                                 gameState.ship = new Ship();
                                 gameState.invulnerable = 120;
                             } else {
-                                gameState.gameOver = true;
-                                gameOverEl.classList.add('show');
-                                stopUfoSound(); // Stop UFO sound!
-                                startStartScreenMusic(); // Start Moonlight melody!
+                                handleGameOver();
                             }
                         }
                     });
@@ -1942,18 +2270,15 @@
                     // UFO Bullets vs Ship
                     gameState.ufoBullets = gameState.ufoBullets.filter(bullet => {
                         if (checkCollision(gameState.ship, bullet, 10)) {
-                            createShipExplosion(gameState.ship); // NEW: Authentic explosion!
+                            createShipExplosion(gameState.ship);
                             gameState.lives--;
                             if (gameState.lives > 0) {
                                 gameState.ship = new Ship();
                                 gameState.invulnerable = 120;
                             } else {
-                                gameState.gameOver = true;
-                                gameOverEl.classList.add('show');
-                                stopUfoSound(); // Stop UFO sound!
-                                startStartScreenMusic(); // Start Moonlight melody!
+                                handleGameOver();
                             }
-                            return false; // Bullet entfernen
+                            return false;
                         }
                         return true;
                     });
@@ -1975,10 +2300,7 @@
                             gameState.ship = new Ship();
                             gameState.invulnerable = 120;
                         } else {
-                            gameState.gameOver = true;
-                            gameOverEl.classList.add('show');
-                            stopUfoSound();
-                            startStartScreenMusic();
+                            handleGameOver();
                         }
                     }
                 }
@@ -2015,6 +2337,19 @@
         
         const clickHandler = (e) => {
             console.log('🎯 Click handler triggered');
+            
+            // BLOCK if entering highscore name!
+            if (highScoreState.entering) {
+                return;
+            }
+            
+            // If showing TRY AGAIN screen -> RESTART!
+            if (gameState.showingTryAgain) {
+                console.log('🔄 Restarting from TRY AGAIN...');
+                gameState.showingTryAgain = false;
+                initGame();
+                return;
+            }
             
             // If music is playing but game not started -> START GAME!
             if (musicStartAttempted && !gameState.gameStarted) {
@@ -2054,6 +2389,17 @@
         
         const keyHandler = (e) => {
             console.log('⌨️ Key handler triggered');
+            
+            // BLOCK if entering highscore name!
+            if (highScoreState.entering) {
+                return;
+            }
+            
+            // BLOCK if showing TRY AGAIN (except Space key)
+            if (gameState.showingTryAgain && e.key !== ' ') {
+                return;
+            }
+            
             clickHandler(e);
         };
         
