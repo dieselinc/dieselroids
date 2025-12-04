@@ -958,10 +958,11 @@
             stopUfoSound();
             startStartScreenMusic();
             
-            const isSmallMobile = window.innerWidth <= 430; // iPhone only!
+            // DISABLE NAME ENTRY ON ALL TOUCH DEVICES (iPhone + iPad)!
+            const isTouchDevice = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
             
-            // Check if score qualifies for top 5 - DESKTOP & IPAD!
-            if (!isSmallMobile) {
+            // Check if score qualifies for top 5 - DESKTOP ONLY!
+            if (!isTouchDevice) {
                 const rank = checkHighScore(gameState.score);
                 if (rank > 0) {
                     highScoreState.entering = true;
@@ -969,11 +970,11 @@
                     highScoreState.name = '';
                     highScoreState.cursorBlink = 0;
                 }
-                // Desktop & iPad: NO auto-transition! Player presses SPACE/TAP to continue
+                // Desktop: NO auto-transition! Player presses SPACE to continue
                 return;
             }
             
-            // iPhone only: Show TRY AGAIN screen after 2 seconds
+            // Touch devices (iPhone + iPad): Show TRY AGAIN screen after 2 seconds
             setTimeout(() => {
                 gameState.showingTryAgain = true;
                 gameState.gameOver = false;
