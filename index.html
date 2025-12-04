@@ -1829,9 +1829,9 @@
                 ctx.save();
                 ctx.globalAlpha = 1.0;
                 const title = "DIESELROIDS";
-                // iPhone: 2.2, iPad Portrait: 4.5, iPad Landscape: 4.0, Desktop: 5.5
-                const titleSize = isSmallMobile ? 2.2 : (isIpadPortrait ? 4.5 : (isMediumMobile ? 4.0 : 5.5));
-                const titleSpacing = isSmallMobile ? 9 : (isIpadPortrait ? 14 : (isMediumMobile ? 12 : 18));
+                // iPhone: 2.2, iPad Portrait: 5.0 (BIGGER!), iPad Landscape: 5.0 (BIGGER!), Desktop: 5.5
+                const titleSize = isSmallMobile ? 2.2 : (isIpadPortrait ? 5.0 : (isMediumMobile ? 5.0 : 5.5));
+                const titleSpacing = isSmallMobile ? 9 : (isIpadPortrait ? 16 : (isMediumMobile ? 16 : 18));
                 const titleWidth = title.length * titleSpacing * titleSize;
                 const titleY = centerY - 120; // Same for all (more centered!)
                 VectorFont.drawText(ctx, title, centerX - titleWidth / 2, titleY, titleSize, titleSpacing);
@@ -1839,10 +1839,11 @@
                 
                 ctx.save();
                 ctx.globalAlpha = 0.6;
-                const subtitle = isSmallMobile ? "A TRIBUTE TO ASTEROIDS 1979" : "A TRIBUTE TO THE 1979 ARCADE CLASSIC ASTEROIDS";
-                // iPhone: 0.6, iPad Portrait: 1.1, iPad Landscape: 1.0, Desktop: 1.2
-                const subSize = isSmallMobile ? 0.6 : (isIpadPortrait ? 1.1 : (isMediumMobile ? 1.0 : 1.2));
-                const subSpacing = isSmallMobile ? 6 : (isIpadPortrait ? 10 : (isMediumMobile ? 9 : 10));
+                // SAME TEXT EVERYWHERE: "A TRIBUTE TO ATARIS ASTEROIDS"
+                const subtitle = "A TRIBUTE TO ATARIS ASTEROIDS";
+                // iPhone: 0.7 (bigger!), iPad Portrait: 1.4 (BIGGER!), iPad Landscape: 1.4 (BIGGER!), Desktop: 1.4 (bigger!)
+                const subSize = isSmallMobile ? 0.7 : (isIpadPortrait ? 1.4 : (isMediumMobile ? 1.4 : 1.4));
+                const subSpacing = isSmallMobile ? 7 : (isIpadPortrait ? 11 : (isMediumMobile ? 11 : 11));
                 const subWidth = subtitle.length * subSpacing * subSize;
                 const subY = centerY - 20; // Same for all (more centered!)
                 VectorFont.drawText(ctx, subtitle, centerX - subWidth / 2, subY, subSize, subSpacing);
@@ -1854,7 +1855,9 @@
                 
                 ctx.save();
                 ctx.globalAlpha = pulseOpacity;
-                const startText = isSmallMobile ? "TAP TO START" : "PRESS SPACE TO START";
+                // Check for touch support (iPhone + iPad)
+                const hasTouchSupport = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
+                const startText = hasTouchSupport ? "TAP TO START" : "PRESS SPACE TO START";
                 const startSize = isSmallMobile ? 1.3 : (isMediumMobile ? 2.2 : 2.5);
                 const startSpacing = isSmallMobile ? 9 : (isMediumMobile ? 13 : 14);
                 const startWidth = startText.length * startSpacing * startSize;
