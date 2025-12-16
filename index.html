@@ -555,7 +555,7 @@
                     ctx.scale(size, size);
                     
                     ctx.strokeStyle = '#fff';
-                    ctx.fillStyle = '#fff';
+                    ctx.fillStyle = 'rgba(255, 255, 255, 0.4)'; // SUBTLE dots (was '#fff')
                     ctx.lineWidth = 1 / size;
                     
                     // Draw lines
@@ -568,7 +568,7 @@
                         // Draw dots at line endpoints (characteristic Atari style!)
                         [line[0], line[1]].forEach(point => {
                             ctx.beginPath();
-                            ctx.arc(point[0], point[1], 0.8 / size, 0, Math.PI * 2);
+                            ctx.arc(point[0], point[1], 0.6 / size, 0, Math.PI * 2); // SMALLER (was 0.8)
                             ctx.fill();
                         });
                     });
@@ -587,7 +587,7 @@
             ctx.scale(size, size);
             
             ctx.strokeStyle = 'rgba(255, 255, 255, 0.8)';
-            ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.4)'; // SUBTLE dots (was 0.9)
             ctx.lineWidth = 1 / size;
             
             // Draw ship outline
@@ -603,7 +603,7 @@
             const points = [{x: 12, y: 0}, {x: -8, y: -7}, {x: -5, y: 0}, {x: -8, y: 7}];
             points.forEach(p => {
                 ctx.beginPath();
-                ctx.arc(p.x, p.y, 0.8 / size, 0, Math.PI * 2);
+                ctx.arc(p.x, p.y, 0.6 / size, 0, Math.PI * 2); // SMALLER (was 0.8)
                 ctx.fill();
             });
             
@@ -1339,11 +1339,11 @@
                 ctx.closePath();
                 ctx.stroke();
                 
-                // Draw vector points at line ends (10% brighter, subtle)
-                ctx.fillStyle = 'rgba(255, 255, 255, 0.9)'; // 10% brighter than lines
+                // Draw vector points at line ends (SUBTLE!)
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.3)'; // MUCH DARKER (was 0.9)
                 this.points.forEach(p => {
                     ctx.beginPath();
-                    ctx.arc(p.x, p.y, 1.2, 0, Math.PI * 2); // Small dots at vertices
+                    ctx.arc(p.x, p.y, 0.8, 0, Math.PI * 2); // SMALLER (was 1.2)
                     ctx.fill();
                 });
                 
@@ -1366,11 +1366,13 @@
             constructor(x, y, angle) {
                 this.x = x;
                 this.y = y;
+                // FIXED: Absolute velocity (12 px/frame), NOT relative to ship!
+                // This ensures bullets always fly straight regardless of ship movement
                 this.velocity = {
-                    x: Math.cos(angle) * 8,
-                    y: Math.sin(angle) * 8
+                    x: Math.cos(angle) * 12,
+                    y: Math.sin(angle) * 12
                 };
-                this.life = 60; // Frames
+                this.life = 90; // LONGER life = more range (was 60)
             }
 
             update() {
@@ -1386,9 +1388,10 @@
             }
 
             draw() {
+                // FIXED: Small dots (1px radius) instead of 2px
                 ctx.fillStyle = '#fff';
                 ctx.beginPath();
-                ctx.arc(this.x, this.y, 2, 0, Math.PI * 2);
+                ctx.arc(this.x, this.y, 1, 0, Math.PI * 2);
                 ctx.fill();
             }
         }
